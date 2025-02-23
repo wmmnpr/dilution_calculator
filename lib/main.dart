@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 void main() {
@@ -25,10 +27,37 @@ enum ConcentrationUnit {
 }
 
 class Concentration {
-  final double number;
+  final double amount;
   final ConcentrationUnit unit;
 
-  Concentration(this.number, this.unit);
+  Concentration(this.amount, this.unit);
+
+  @override
+  String toString() {
+    var units = unit.displayName;
+    return '$amount $units';
+  }
+}
+
+enum VolumeUnits {
+  l("liter"),
+  ml("mL"),
+  ul("uL");
+  final String displayName;
+  const VolumeUnits(this.displayName);
+}
+
+class Volume {
+  final double amount;
+  final VolumeUnits units;
+
+  Volume(this.amount, this.units);
+
+  @override
+  String toString() {
+    return '$amount $units';
+  }
+
 }
 
 class Bottle {
@@ -182,20 +211,6 @@ class _BottleHomePageState extends State<BottleHomePage> {
       appBar: AppBar(title: Text('Bottle Tracker')),
       body: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                onPressed: _showAddBottleDialog,
-                child: Text('Add Bottle'),
-              ),
-              SizedBox(width: 10),
-              ElevatedButton(
-                onPressed: _showAddDilutionDialog,
-                child: Text('Add Dilution'),
-              ),
-            ],
-          ),
           Expanded(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -203,19 +218,50 @@ class _BottleHomePageState extends State<BottleHomePage> {
                 columns: [
                   DataColumn(label: Text('Name')),
                   DataColumn(label: Text('Concentration')),
-                  DataColumn(label: Text('Unit')),
                 ],
                 rows: bottles.map((bottle) => DataRow(cells: [
                   DataCell(Text(bottle.name)),
-                  DataCell(Text(bottle.concentration.number.toString())),
-                  DataCell(Text(bottle.concentration.unit.displayName)),
+                  DataCell(Text(bottle.concentration.toString())),
                 ])).toList(),
               ),
             ),
           ),
           if (dilutions.isNotEmpty) ...[
             Divider(),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: [
+                    DataColumn(label: Text('Amount')),
+                    DataColumn(label: Text('Amount Unit')),
+                    ...bottles.map((bottle) => DataColumn(label: Text('${bottle.name} Conc'))),
+                  ],
+                  rows: dilutions.map((dilution) => DataRow(cells: [
+                    DataCell(Text(dilution.amount)),
+                    DataCell(Text(dilution.amountUnit)),
+                    ...bottles.map((bottle) => DataCell(Text(dilution.bottleConcentrations[bottle.name]?.amount.toString() ?? ''))),
+                  ])).toList(),
+                ),
+              ),
+            ),
           ],
+        ],
+      ),
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: _showAddBottleDialog,
+            child: Icon(Icons.add),
+            heroTag: 'addBottle',
+          ),
+          SizedBox(width: 10),
+          FloatingActionButton(
+            onPressed: _showAddDilutionDialog,
+            child: Icon(Icons.science),
+            heroTag: 'addDilution',
+          ),
         ],
       ),
     );
