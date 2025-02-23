@@ -40,7 +40,7 @@ class Concentration {
 }
 
 enum VolumeUnits {
-  l("liter"),
+  l("L"),
   ml("mL"),
   ul("uL");
   final String displayName;
@@ -55,7 +55,8 @@ class Volume {
 
   @override
   String toString() {
-    return '$amount $units';
+    var displayName = units.displayName;
+    return '$amount $displayName';
   }
 
 }
@@ -67,10 +68,9 @@ class Bottle {
 }
 
 class Dilution {
-  final String amount;
-  final String amountUnit;
+  final Volume volume;
   final Map<String, Concentration> bottleConcentrations;
-  Dilution(this.amount, this.amountUnit, this.bottleConcentrations);
+  Dilution(this.volume, this.bottleConcentrations);
 }
 
 class BottleHomePage extends StatefulWidget {
@@ -189,8 +189,7 @@ class _BottleHomePageState extends State<BottleHomePage> {
                 if (amount.isNotEmpty && concentrations.isNotEmpty) {
                   setState(() {
                     dilutions.add(Dilution(
-                        amount,
-                        amountUnit,
+                        Volume(double.parse(amount), VolumeUnits.values.first /*amountUnit*/),
                         concentrations.map((bottleName, concentration) =>
                             MapEntry(bottleName, Concentration(concentration, bottles.firstWhere((b) => b.name == bottleName).concentration.unit)))));
                   });
@@ -234,12 +233,10 @@ class _BottleHomePageState extends State<BottleHomePage> {
                 child: DataTable(
                   columns: [
                     DataColumn(label: Text('Amount')),
-                    DataColumn(label: Text('Amount Unit')),
                     ...bottles.map((bottle) => DataColumn(label: Text('${bottle.name} Conc'))),
                   ],
                   rows: dilutions.map((dilution) => DataRow(cells: [
-                    DataCell(Text(dilution.amount)),
-                    DataCell(Text(dilution.amountUnit)),
+                    DataCell(Text(dilution.volume.toString())),
                     ...bottles.map((bottle) => DataCell(Text(dilution.bottleConcentrations[bottle.name]?.amount.toString() ?? ''))),
                   ])).toList(),
                 ),
