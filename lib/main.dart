@@ -142,9 +142,11 @@ class _BottleHomePageState extends State<BottleHomePage> {
     showDialog(
       context: context,
       builder: (context) {
-        Map<String, double> concentrations = {};
+        Map<String, Concentration> concentrations = {};
         String amount = '';
         String amountUnit = 'mL';
+        double concentrationValue = 0;
+        ConcentrationUnit unit = ConcentrationUnit.mgPerML;
         return AlertDialog(
           title: Text('Add Dilution'),
           content: Column(
@@ -173,7 +175,21 @@ class _BottleHomePageState extends State<BottleHomePage> {
                     decoration: InputDecoration(
                         labelText: 'Concentration for ${bottle.name}'),
                     keyboardType: TextInputType.number,
-                    onChanged: (value) => concentrations[bottle.name] = double.tryParse(value) ?? 0,
+                    onChanged: (value) => concentrations[bottle.name] = Concentration(double.tryParse(value)!, ConcentrationUnit.mgPerML)
+                  ),
+                  DropdownButtonFormField<ConcentrationUnit>(
+                    value: unit,
+                    items: ConcentrationUnit.values.map((u) {
+                      return DropdownMenuItem(
+                        value: u,
+                        child: Text(u.displayName),
+                      );
+                    }).toList(),
+                    onChanged: (value) => {
+                      concentrations[bottle.name] = Concentration(concentrations[bottle.name]!.amount, value!),
+                      setState(() => unit = value ?? ConcentrationUnit.mgPerML)
+                    },
+                    decoration: InputDecoration(labelText: 'Units'),
                   ),
                 ],
               )),
@@ -191,7 +207,7 @@ class _BottleHomePageState extends State<BottleHomePage> {
                     dilutions.add(Dilution(
                         Volume(double.parse(amount), VolumeUnits.values.first /*amountUnit*/),
                         concentrations.map((bottleName, concentration) =>
-                            MapEntry(bottleName, Concentration(concentration, bottles.firstWhere((b) => b.name == bottleName).concentration.unit)))));
+                            MapEntry(bottleName, concentration))));
                   });
                   Navigator.of(context).pop();
                 }
@@ -232,12 +248,12 @@ class _BottleHomePageState extends State<BottleHomePage> {
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
                   columns: [
-                    DataColumn(label: Text('Amount')),
-                    ...bottles.map((bottle) => DataColumn(label: Text('${bottle.name} Conc'))),
+                    DataColumn(label: Text('Volume')),
+                    ...bottles.map((bottle) => DataColumn(label: Text('${bottle.name}'))),
                   ],
                   rows: dilutions.map((dilution) => DataRow(cells: [
                     DataCell(Text(dilution.volume.toString())),
-                    ...bottles.map((bottle) => DataCell(Text(dilution.bottleConcentrations[bottle.name]?.amount.toString() ?? ''))),
+                    ...bottles.map((bottle) => DataCell(Text(dilution.bottleConcentrations[bottle.name]?.toString() ?? ''))),
                   ])).toList(),
                 ),
               ),
