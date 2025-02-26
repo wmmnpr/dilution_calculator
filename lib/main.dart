@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 
 void main() {
@@ -18,12 +16,14 @@ class MyApp extends StatelessWidget {
 }
 
 enum ConcentrationUnit {
-  mgPerML("mg/mL"),
-  ugPerML("ug/mL"),
-  ngPerML("ng/mL");
+  mgPerML("mg/mL", 1e-3 / 1e-3),
+  ugPerML("ug/mL", 1e-6 / 1e-3),
+  ngPerML("ng/mL", 1e-9 / 1e-3);
 
   final String displayName;
-  const ConcentrationUnit(this.displayName);
+  final double multiplier;
+
+  const ConcentrationUnit(this.displayName, this.multiplier);
 }
 
 class Concentration {
@@ -40,11 +40,14 @@ class Concentration {
 }
 
 enum VolumeUnits {
-  l("L"),
-  ml("mL"),
-  ul("uL");
+  l("L", 1),
+  ml("mL", 1e-3),
+  ul("uL", 1e-9);
+
   final String displayName;
-  const VolumeUnits(this.displayName);
+  final double multiplier;
+
+  const VolumeUnits(this.displayName, this.multiplier);
 }
 
 class Volume {
@@ -58,18 +61,19 @@ class Volume {
     var displayName = units.displayName;
     return '$amount $displayName';
   }
-
 }
 
 class Bottle {
   final String name;
   final Concentration concentration;
+
   Bottle(this.name, this.concentration);
 }
 
 class Dilution {
   final Volume volume;
   final Map<String, Concentration> bottleConcentrations;
+
   Dilution(this.volume, this.bottleConcentrations);
 }
 
@@ -101,7 +105,8 @@ class _BottleHomePageState extends State<BottleHomePage> {
               TextField(
                 decoration: InputDecoration(labelText: 'Concentration'),
                 keyboardType: TextInputType.number,
-                onChanged: (value) => concentrationValue = double.tryParse(value) ?? 0,
+                onChanged: (value) =>
+                    concentrationValue = double.tryParse(value) ?? 0,
               ),
               DropdownButtonFormField<ConcentrationUnit>(
                 value: unit,
@@ -111,7 +116,8 @@ class _BottleHomePageState extends State<BottleHomePage> {
                     child: Text(u.displayName),
                   );
                 }).toList(),
-                onChanged: (value) => setState(() => unit = value ?? ConcentrationUnit.mgPerML),
+                onChanged: (value) =>
+                    setState(() => unit = value ?? ConcentrationUnit.mgPerML),
                 decoration: InputDecoration(labelText: 'Units'),
               ),
             ],
@@ -125,7 +131,8 @@ class _BottleHomePageState extends State<BottleHomePage> {
               onPressed: () {
                 if (name.isNotEmpty) {
                   setState(() {
-                    bottles.add(Bottle(name, Concentration(concentrationValue, unit)));
+                    bottles.add(
+                        Bottle(name, Concentration(concentrationValue, unit)));
                   });
                   Navigator.of(context).pop();
                 }
@@ -138,6 +145,10 @@ class _BottleHomePageState extends State<BottleHomePage> {
     );
   }
 
+  bool containsNumber(String input) {
+    final RegExp regex = RegExp(r'\d+(\.\d+)?');
+    return regex.hasMatch(input);
+  }
   void _showAddDilutionDialog() {
     showDialog(
       context: context,
@@ -165,34 +176,45 @@ class _BottleHomePageState extends State<BottleHomePage> {
                     child: Text(unit),
                   );
                 }).toList(),
-                onChanged: (value) => setState(() => amountUnit = value ?? 'mL'),
+                onChanged: (value) =>
+                    setState(() => amountUnit = value ?? 'mL'),
                 decoration: InputDecoration(labelText: 'Amount Unit'),
               ),
               ...bottles.map((bottle) => Column(
-                children: [
-                  Text(bottle.name),
-                  TextField(
-                    decoration: InputDecoration(
-                        labelText: 'Concentration for ${bottle.name}'),
-                    keyboardType: TextInputType.number,
-                    onChanged: (value) => concentrations[bottle.name] = Concentration(double.tryParse(value)!, ConcentrationUnit.mgPerML)
-                  ),
-                  DropdownButtonFormField<ConcentrationUnit>(
-                    value: unit,
-                    items: ConcentrationUnit.values.map((u) {
-                      return DropdownMenuItem(
-                        value: u,
-                        child: Text(u.displayName),
-                      );
-                    }).toList(),
-                    onChanged: (value) => {
-                      concentrations[bottle.name] = Concentration(concentrations[bottle.name]!.amount, value!),
-                      setState(() => unit = value ?? ConcentrationUnit.mgPerML)
-                    },
-                    decoration: InputDecoration(labelText: 'Units'),
-                  ),
-                ],
-              )),
+                    children: [
+                      Text(bottle.name),
+                      TextField(
+                          decoration: InputDecoration(
+                              labelText: 'Concentration for ${bottle.name}'),
+                          keyboardType: TextInputType.number,
+                          onChanged: (value) => {
+                            if(containsNumber(value))
+                                concentrations[bottle.name] = Concentration(
+                                    double.tryParse(value)!,
+                                    ConcentrationUnit.mgPerML)
+                              }),
+                      DropdownButtonFormField<ConcentrationUnit>(
+                        value: unit,
+                        items: ConcentrationUnit.values.map((u) {
+                          return DropdownMenuItem(
+                            value: u,
+                            child: Text(u.displayName),
+                          );
+                        }).toList(),
+                        onChanged: (value) => {
+                          if (concentrations.containsKey(bottle.name) &&
+                              bottle.name.isNotEmpty)
+                            {
+                              concentrations[bottle.name] = Concentration(
+                                  concentrations[bottle.name]!.amount, value!),
+                              setState(() =>
+                                  unit = value ?? ConcentrationUnit.mgPerML)
+                            }
+                        },
+                        decoration: InputDecoration(labelText: 'Units'),
+                      ),
+                    ],
+                  )),
             ],
           ),
           actions: [
@@ -205,7 +227,8 @@ class _BottleHomePageState extends State<BottleHomePage> {
                 if (amount.isNotEmpty && concentrations.isNotEmpty) {
                   setState(() {
                     dilutions.add(Dilution(
-                        Volume(double.parse(amount), VolumeUnits.values.first /*amountUnit*/),
+                        Volume(double.parse(amount),
+                            VolumeUnits.values.first /*amountUnit*/),
                         concentrations.map((bottleName, concentration) =>
                             MapEntry(bottleName, concentration))));
                   });
@@ -234,10 +257,12 @@ class _BottleHomePageState extends State<BottleHomePage> {
                   DataColumn(label: Text('Name')),
                   DataColumn(label: Text('Concentration')),
                 ],
-                rows: bottles.map((bottle) => DataRow(cells: [
-                  DataCell(Text(bottle.name)),
-                  DataCell(Text(bottle.concentration.toString())),
-                ])).toList(),
+                rows: bottles
+                    .map((bottle) => DataRow(cells: [
+                          DataCell(Text(bottle.name)),
+                          DataCell(Text(bottle.concentration.toString())),
+                        ]))
+                    .toList(),
               ),
             ),
           ),
@@ -249,12 +274,18 @@ class _BottleHomePageState extends State<BottleHomePage> {
                 child: DataTable(
                   columns: [
                     DataColumn(label: Text('Volume')),
-                    ...bottles.map((bottle) => DataColumn(label: Text('${bottle.name}'))),
+                    ...bottles.map(
+                        (bottle) => DataColumn(label: Text('${bottle.name}'))),
                   ],
-                  rows: dilutions.map((dilution) => DataRow(cells: [
-                    DataCell(Text(dilution.volume.toString())),
-                    ...bottles.map((bottle) => DataCell(Text(dilution.bottleConcentrations[bottle.name]?.toString() ?? ''))),
-                  ])).toList(),
+                  rows: dilutions
+                      .map((dilution) => DataRow(cells: [
+                            DataCell(Text(dilution.volume.toString())),
+                            ...bottles.map((bottle) => DataCell(Text(dilution
+                                    .bottleConcentrations[bottle.name]
+                                    ?.toString() ??
+                                ''))),
+                          ]))
+                      .toList(),
                 ),
               ),
             ),
