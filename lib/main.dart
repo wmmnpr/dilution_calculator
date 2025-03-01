@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 
 void main() {
@@ -63,18 +65,26 @@ class Volume {
   }
 }
 
-class Bottle {
+class Solution {
   final String name;
   final Concentration concentration;
 
-  Bottle(this.name, this.concentration);
+  Solution(this.name, this.concentration);
+}
+
+class Dilutant {
+  final Solution solution;
+  double volume = 0.0;
+
+  Dilutant(this.solution);
 }
 
 class Dilution {
   final Volume volume;
-  final Map<String, Concentration> bottleConcentrations;
+  final Map<String, Concentration>concentrations;
+  final List<Dilutant> dilutants;
 
-  Dilution(this.volume, this.bottleConcentrations);
+  Dilution(this.volume, this.concentrations, this.dilutants);
 }
 
 class BottleHomePage extends StatefulWidget {
@@ -83,10 +93,10 @@ class BottleHomePage extends StatefulWidget {
 }
 
 class _BottleHomePageState extends State<BottleHomePage> {
-  final List<Bottle> bottles = [];
+  final Map<String, Solution> solutions = <String, Solution>{};
   final List<Dilution> dilutions = [];
 
-  void _showAddBottleDialog() {
+  void _showAddSolutionDialog() {
     showDialog(
       context: context,
       builder: (context) {
@@ -94,12 +104,12 @@ class _BottleHomePageState extends State<BottleHomePage> {
         double concentrationValue = 0;
         ConcentrationUnit unit = ConcentrationUnit.mgPerML;
         return AlertDialog(
-          title: Text('Add Bottle'),
+          title: Text('Add Solution'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                decoration: InputDecoration(labelText: 'Name'),
+                decoration: InputDecoration(labelText: 'Solution'),
                 onChanged: (value) => name = value,
               ),
               TextField(
@@ -131,8 +141,7 @@ class _BottleHomePageState extends State<BottleHomePage> {
               onPressed: () {
                 if (name.isNotEmpty) {
                   setState(() {
-                    bottles.add(
-                        Bottle(name, Concentration(concentrationValue, unit)));
+                    solutions.putIfAbsent(name, () => Solution(name, Concentration(concentrationValue, unit)));
                   });
                   Navigator.of(context).pop();
                 }
@@ -145,18 +154,22 @@ class _BottleHomePageState extends State<BottleHomePage> {
     );
   }
 
+  void _calculateDilutions() {
+    for (var dil in this.dilutions) {}
+  }
+
   bool containsNumber(String input) {
     final RegExp regex = RegExp(r'\d+(\.\d+)?');
     return regex.hasMatch(input);
   }
+
   void _showAddDilutionDialog() {
     showDialog(
       context: context,
       builder: (context) {
-        Map<String, Concentration> concentrations = {};
+        Map<String, Concentration> concentrations = <String, Concentration>{};
         String amount = '';
         String amountUnit = 'mL';
-        double concentrationValue = 0;
         ConcentrationUnit unit = ConcentrationUnit.mgPerML;
         return AlertDialog(
           title: Text('Add Dilution'),
@@ -180,18 +193,18 @@ class _BottleHomePageState extends State<BottleHomePage> {
                     setState(() => amountUnit = value ?? 'mL'),
                 decoration: InputDecoration(labelText: 'Amount Unit'),
               ),
-              ...bottles.map((bottle) => Column(
+              ...solutions.entries.map((bottle) => Column(
                     children: [
-                      Text(bottle.name),
+                      Text(bottle.key),
                       TextField(
                           decoration: InputDecoration(
-                              labelText: 'Concentration for ${bottle.name}'),
+                              labelText: 'Concentration for ${bottle.key}'),
                           keyboardType: TextInputType.number,
                           onChanged: (value) => {
-                            if(containsNumber(value))
-                                concentrations[bottle.name] = Concentration(
-                                    double.tryParse(value)!,
-                                    ConcentrationUnit.mgPerML)
+                                if (containsNumber(value))
+                                  concentrations[bottle.key] = Concentration(
+                                      double.tryParse(value)!,
+                                      ConcentrationUnit.mgPerML)
                               }),
                       DropdownButtonFormField<ConcentrationUnit>(
                         value: unit,
@@ -202,11 +215,11 @@ class _BottleHomePageState extends State<BottleHomePage> {
                           );
                         }).toList(),
                         onChanged: (value) => {
-                          if (concentrations.containsKey(bottle.name) &&
-                              bottle.name.isNotEmpty)
+                          if (concentrations.containsKey(bottle.key) &&
+                              bottle.key.isNotEmpty)
                             {
-                              concentrations[bottle.name] = Concentration(
-                                  concentrations[bottle.name]!.amount, value!),
+                              concentrations[bottle.key] = Concentration(
+                                  concentrations[bottle.key]!.amount, value!),
                               setState(() =>
                                   unit = value ?? ConcentrationUnit.mgPerML)
                             }
@@ -226,11 +239,11 @@ class _BottleHomePageState extends State<BottleHomePage> {
               onPressed: () {
                 if (amount.isNotEmpty && concentrations.isNotEmpty) {
                   setState(() {
-                    dilutions.add(Dilution(
-                        Volume(double.parse(amount),
-                            VolumeUnits.values.first /*amountUnit*/),
-                        concentrations.map((bottleName, concentration) =>
-                            MapEntry(bottleName, concentration))));
+                    List<Dilutant>dilutants = [];
+                    concentrations.forEach((name, conc) => {
+                       dilutants.add(Dilutant(solutions[name]!))
+                    });
+                    dilutions.add(Dilution(Volume(double.parse(amount), VolumeUnits.values.firstWhere((unit)=>unit.displayName.compareTo(amountUnit) == 0)), concentrations, dilutants));
                   });
                   Navigator.of(context).pop();
                 }
@@ -246,26 +259,29 @@ class _BottleHomePageState extends State<BottleHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Bottle Tracker')),
+      appBar: AppBar(title: Text('Dilution Calculator')),
       body: Column(
         children: [
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                columns: [
-                  DataColumn(label: Text('Name')),
-                  DataColumn(label: Text('Concentration')),
-                ],
-                rows: bottles
-                    .map((bottle) => DataRow(cells: [
-                          DataCell(Text(bottle.name)),
-                          DataCell(Text(bottle.concentration.toString())),
-                        ]))
-                    .toList(),
+          if (solutions.isNotEmpty) ...[
+            Divider(),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: [
+                    DataColumn(label: Text('Solution')),
+                    DataColumn(label: Text('Concentration')),
+                  ],
+                  rows: solutions.
+                      entries.map((bottle) => DataRow(cells: [
+                            DataCell(Text(bottle.key)),
+                            DataCell(Text(bottle.value.concentration.toString())),
+                          ]))
+                      .toList(),
+                ),
               ),
             ),
-          ),
+          ],
           if (dilutions.isNotEmpty) ...[
             Divider(),
             Expanded(
@@ -274,18 +290,15 @@ class _BottleHomePageState extends State<BottleHomePage> {
                 child: DataTable(
                   columns: [
                     DataColumn(label: Text('Volume')),
-                    ...bottles.map(
-                        (bottle) => DataColumn(label: Text('${bottle.name}'))),
+                    ...dilutions.first.dilutants.expand((dilution) => [DataColumn(label: Text(dilution.solution.name)),DataColumn(label: Text('Vol. ${dilution.solution.name}'))]),
+                    //...dilutions.first.dilutants.map((dilution) => DataColumn(label: Text('Vol. ${dilution.solution.name}')))
                   ],
-                  rows: dilutions
-                      .map((dilution) => DataRow(cells: [
-                            DataCell(Text(dilution.volume.toString())),
-                            ...bottles.map((bottle) => DataCell(Text(dilution
-                                    .bottleConcentrations[bottle.name]
-                                    ?.toString() ??
-                                ''))),
-                          ]))
-                      .toList(),
+                  rows: [
+                    ...dilutions.map((dilution) => DataRow(cells: [
+                      DataCell(Text(dilution.volume.toString())),
+                      ...dilution.dilutants.expand((dilutant)=>[DataCell(Text(dilutant.volume.toString())), DataCell(Text(dilutant.volume.toString()))])
+                    ])).toList(),
+                  ],
                 ),
               ),
             ),
@@ -296,7 +309,7 @@ class _BottleHomePageState extends State<BottleHomePage> {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           FloatingActionButton(
-            onPressed: _showAddBottleDialog,
+            onPressed: _showAddSolutionDialog,
             child: Icon(Icons.add),
             heroTag: 'addBottle',
           ),
@@ -305,6 +318,12 @@ class _BottleHomePageState extends State<BottleHomePage> {
             onPressed: _showAddDilutionDialog,
             child: Icon(Icons.science),
             heroTag: 'addDilution',
+          ),
+          SizedBox(width: 10),
+          FloatingActionButton(
+            onPressed: _calculateDilutions,
+            child: Icon(Icons.calculate),
+            heroTag: 'calculate',
           ),
         ],
       ),
