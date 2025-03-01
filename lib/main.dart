@@ -75,14 +75,15 @@ class Solution {
 class Dilutant {
   final Solution solution;
   double volume = 0.0;
+  Concentration concentration;
 
-  Dilutant(this.solution);
+  Dilutant(this.solution, this.concentration);
 }
 
 class Dilution {
   final Volume volume;
   final Map<String, Concentration>concentrations;
-  final List<Dilutant> dilutants;
+  final Map<String, Dilutant> dilutants;
 
   Dilution(this.volume, this.concentrations, this.dilutants);
 }
@@ -239,9 +240,9 @@ class _BottleHomePageState extends State<BottleHomePage> {
               onPressed: () {
                 if (amount.isNotEmpty && concentrations.isNotEmpty) {
                   setState(() {
-                    List<Dilutant>dilutants = [];
+                    Map<String, Dilutant>dilutants = <String, Dilutant>{};
                     concentrations.forEach((name, conc) => {
-                       dilutants.add(Dilutant(solutions[name]!))
+                       dilutants.putIfAbsent(name, () => Dilutant(solutions[name]!, conc))
                     });
                     dilutions.add(Dilution(Volume(double.parse(amount), VolumeUnits.values.firstWhere((unit)=>unit.displayName.compareTo(amountUnit) == 0)), concentrations, dilutants));
                   });
@@ -290,13 +291,13 @@ class _BottleHomePageState extends State<BottleHomePage> {
                 child: DataTable(
                   columns: [
                     DataColumn(label: Text('Volume')),
-                    ...dilutions.first.dilutants.expand((dilution) => [DataColumn(label: Text(dilution.solution.name)),DataColumn(label: Text('Vol. ${dilution.solution.name}'))]),
+                    ...dilutions.first.dilutants.entries.expand((dilution) => [DataColumn(label: Text(dilution.key)),DataColumn(label: Text('Vol. ${dilution.key}'))]),
                     //...dilutions.first.dilutants.map((dilution) => DataColumn(label: Text('Vol. ${dilution.solution.name}')))
                   ],
                   rows: [
                     ...dilutions.map((dilution) => DataRow(cells: [
                       DataCell(Text(dilution.volume.toString())),
-                      ...dilution.dilutants.expand((dilutant)=>[DataCell(Text(dilutant.volume.toString())), DataCell(Text(dilutant.volume.toString()))])
+                      ...dilution.dilutants.entries.expand((dilutant)=>[DataCell(Text(dilutant.value.concentration.toString())), DataCell(Text(dilutant.value.volume.toString()))])
                     ])).toList(),
                   ],
                 ),
