@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 import 'package:flutter/material.dart';
 
 void main() {
@@ -53,8 +51,8 @@ enum VolumeUnits {
 }
 
 class Volume {
-  final double amount;
-  final VolumeUnits units;
+  double amount = 0.0;
+  VolumeUnits units = VolumeUnits.ml;
 
   Volume(this.amount, this.units);
 
@@ -74,7 +72,7 @@ class Solution {
 
 class Dilutant {
   final Solution solution;
-  double volume = 0.0;
+  late Volume volume = Volume(0.0, VolumeUnits.ml);
   Concentration concentration;
 
   Dilutant(this.solution, this.concentration);
@@ -82,7 +80,7 @@ class Dilutant {
 
 class Dilution {
   final Volume volume;
-  final Map<String, Concentration>concentrations;
+  final Map<String, Concentration> concentrations;
   final Map<String, Dilutant> dilutants;
 
   Dilution(this.volume, this.concentrations, this.dilutants);
@@ -142,7 +140,10 @@ class _BottleHomePageState extends State<BottleHomePage> {
               onPressed: () {
                 if (name.isNotEmpty) {
                   setState(() {
-                    solutions.putIfAbsent(name, () => Solution(name, Concentration(concentrationValue, unit)));
+                    solutions.putIfAbsent(
+                        name,
+                        () => Solution(
+                            name, Concentration(concentrationValue, unit)));
                   });
                   Navigator.of(context).pop();
                 }
@@ -240,11 +241,18 @@ class _BottleHomePageState extends State<BottleHomePage> {
               onPressed: () {
                 if (amount.isNotEmpty && concentrations.isNotEmpty) {
                   setState(() {
-                    Map<String, Dilutant>dilutants = <String, Dilutant>{};
+                    Map<String, Dilutant> dilutants = <String, Dilutant>{};
                     concentrations.forEach((name, conc) => {
-                       dilutants.putIfAbsent(name, () => Dilutant(solutions[name]!, conc))
-                    });
-                    dilutions.add(Dilution(Volume(double.parse(amount), VolumeUnits.values.firstWhere((unit)=>unit.displayName.compareTo(amountUnit) == 0)), concentrations, dilutants));
+                          dilutants.putIfAbsent(
+                              name, () => Dilutant(solutions[name]!, conc))
+                        });
+                    dilutions.add(Dilution(
+                        Volume(
+                            double.parse(amount),
+                            VolumeUnits.values.firstWhere((unit) =>
+                                unit.displayName.compareTo(amountUnit) == 0)),
+                        concentrations,
+                        dilutants));
                   });
                   Navigator.of(context).pop();
                 }
@@ -273,10 +281,11 @@ class _BottleHomePageState extends State<BottleHomePage> {
                     DataColumn(label: Text('Solution')),
                     DataColumn(label: Text('Concentration')),
                   ],
-                  rows: solutions.
-                      entries.map((bottle) => DataRow(cells: [
+                  rows: solutions.entries
+                      .map((bottle) => DataRow(cells: [
                             DataCell(Text(bottle.key)),
-                            DataCell(Text(bottle.value.concentration.toString())),
+                            DataCell(
+                                Text(bottle.value.concentration.toString())),
                           ]))
                       .toList(),
                 ),
@@ -291,14 +300,32 @@ class _BottleHomePageState extends State<BottleHomePage> {
                 child: DataTable(
                   columns: [
                     DataColumn(label: Text('Volume')),
-                    ...dilutions.first.dilutants.entries.expand((dilution) => [DataColumn(label: Text(dilution.key)),DataColumn(label: Text('Vol. ${dilution.key}'))]),
-                    //...dilutions.first.dilutants.map((dilution) => DataColumn(label: Text('Vol. ${dilution.solution.name}')))
+                    ...dilutions.first.dilutants.entries.expand((dilution) => [
+                          DataColumn(
+                              label: SizedBox(
+                                  child: Text(
+                                      textAlign: TextAlign.center,
+                                      'Conc.\n${dilution.key}'))),
+                          DataColumn(
+                              label: SizedBox(
+                                  child: Text(
+                                      textAlign: TextAlign.center,
+                                      'Vol.\n${dilution.key}')))
+                        ]),
                   ],
                   rows: [
-                    ...dilutions.map((dilution) => DataRow(cells: [
-                      DataCell(Text(dilution.volume.toString())),
-                      ...dilution.dilutants.entries.expand((dilutant)=>[DataCell(Text(dilutant.value.concentration.toString())), DataCell(Text(dilutant.value.volume.toString()))])
-                    ])).toList(),
+                    ...dilutions
+                        .map((dilution) => DataRow(cells: [
+                              DataCell(Text(dilution.volume.toString())),
+                              ...dilution.dilutants.entries.expand((dilutant) =>
+                                  [
+                                    DataCell(Text(dilutant.value.concentration
+                                        .toString())),
+                                    DataCell(
+                                        Text(dilutant.value.volume.toString()))
+                                  ])
+                            ]))
+                        .toList(),
                   ],
                 ),
               ),
