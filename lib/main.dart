@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'calc.dart';
 
 void main() {
   runApp(MyApp());
@@ -8,7 +9,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Bottle Tracker',
+      title: 'Dilution Calculator',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: BottleHomePage(),
     );
@@ -95,6 +96,12 @@ class _BottleHomePageState extends State<BottleHomePage> {
   final Map<String, Solution> solutions = <String, Solution>{};
   final List<Dilution> dilutions = [];
 
+
+  _BottleHomePageState() {
+    solutions.putIfAbsent('H\u20820',
+        () => Solution('H\u20820', Concentration(0.0, ConcentrationUnit.mgPerML)));
+  }
+
   void _showAddSolutionDialog() {
     showDialog(
       context: context,
@@ -158,7 +165,24 @@ class _BottleHomePageState extends State<BottleHomePage> {
   }
 
   void _calculateDilutions() {
-    for (var dil in this.dilutions) {}
+
+    double Vm = 100; // Total final volume in mL
+    List<List<double>> stockConcentrations = [
+      [100, 0], // Stock 1 (mg/mL for each component)
+      [0, 100], // Stock 2
+      [0, 0]   // Stock 3 (optional additional stock)
+    ];
+    List<double> finalConcentrations = [10, 10]; // Desired final concentrations
+
+    List<double>? volumes = computeMixtureVolumes(Vm, stockConcentrations, finalConcentrations);
+
+    if (volumes != null) {
+      for (int i = 0; i < volumes.length; i++) {
+        print("Use ${volumes[i].toStringAsFixed(2)} mL of Stock ${i + 1}");
+      }
+    } else {
+      print("No valid solution: check concentrations and target values.");
+    }
   }
 
   bool containsNumber(String input) {
@@ -197,7 +221,7 @@ class _BottleHomePageState extends State<BottleHomePage> {
                     setState(() => amountUnit = value ?? 'mL'),
                 decoration: InputDecoration(labelText: 'Amount Unit'),
               ),
-              ...solutions.entries.map((bottle) => Column(
+              ...solutions.entries.where((test) => test.key.compareTo('H\u20820') != 0).map((bottle) => Column(
                     children: [
                       Text(bottle.key),
                       TextField(
