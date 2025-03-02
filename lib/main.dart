@@ -104,7 +104,8 @@ class _BottleHomePageState extends State<BottleHomePage> {
         ConcentrationUnit unit = ConcentrationUnit.mgPerML;
         return AlertDialog(
           title: Text('Add Solution'),
-          content: Column(
+          content: SingleChildScrollView(
+              child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
@@ -130,7 +131,7 @@ class _BottleHomePageState extends State<BottleHomePage> {
                 decoration: InputDecoration(labelText: 'Units'),
               ),
             ],
-          ),
+          )),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -175,7 +176,8 @@ class _BottleHomePageState extends State<BottleHomePage> {
         ConcentrationUnit unit = ConcentrationUnit.mgPerML;
         return AlertDialog(
           title: Text('Add Dilution'),
-          content: Column(
+          content: SingleChildScrollView(
+              child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
@@ -231,7 +233,7 @@ class _BottleHomePageState extends State<BottleHomePage> {
                     ],
                   )),
             ],
-          ),
+          )),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
