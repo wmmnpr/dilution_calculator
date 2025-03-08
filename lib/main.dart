@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'calc.dart';
 
 void main() {
@@ -16,8 +17,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-
-
 class BottleHomePage extends StatefulWidget {
   @override
   _BottleHomePageState createState() => _BottleHomePageState();
@@ -27,34 +26,41 @@ class _BottleHomePageState extends State<BottleHomePage> {
   final Map<String, Solution> solutions = <String, Solution>{};
   final List<Dilution> dilutions = [];
 
-
   _BottleHomePageState() {
-    solutions.putIfAbsent(WATER,
-        () => Solution(WATER, Concentration(0.0, ConcentrationUnit.mgPerML)));
+    solutions.putIfAbsent(WATER, () => STOCK_WATER);
   }
 
   void _calculateDilutions() {
-
-    List<double>stockConcentrations = extractStockConcentrations(solutions);
+    List<double> stockConcentrations = extractStockConcentrations(solutions);
 
     List<List<double>> stockMatrix = createStockMatrix(stockConcentrations);
 
-    List<double>volumeVector = extractDilutionConcentrations(dilutions.first);
+    List<double> volumeVector = extractDilutionConcentrations(dilutions.first);
 
-    List<List<double>>matrixBb = [volumeVector];
+    List<List<double>> matrixBb = [volumeVector];
     List<double>? volumes = solveIt(stockMatrix, matrixBb);
 
+    VolumeUnits targetVolume = dilutions.first.volume.units;
     if (volumes != null) {
-      for (int i = 0; i < volumes.length -1; i++) {
-        dilutions.first.dilutants.values.elementAt(i).volume.amount = volumes[i];
-        dilutions.first.dilutants.values.elementAt(i).volume.units = VolumeUnits.l;
-        print("Use ${volumes[i].toStringAsFixed(2)} mL of Stock ${i + 1}");
+      for (int i = 0; i < volumes.length - 1; i++) {
+        dilutions.first.dilutants.values.elementAt(i).volume.amount =
+            volumes[i] / targetVolume.multiplier;
+        dilutions.first.dilutants.values.elementAt(i).volume.units =
+            targetVolume;
+        print("Use ${volumes[i].toStringAsFixed(4)} mL of Stock ${i + 1}");
       }
+      dilutions.first.dilutants.putIfAbsent(
+          WATER,
+          () => Dilutant.n(
+              STOCK_WATER,
+              Concentration(0.0, ConcentrationUnit.mgPerML),
+              Volume(volumes.last / targetVolume.multiplier, targetVolume)));
     } else {
       print("No valid solution: check concentrations and target values.");
     }
     setState(() => 1);
   }
+
   void _showAddSolutionDialog() {
     showDialog(
       context: context,
@@ -153,41 +159,44 @@ class _BottleHomePageState extends State<BottleHomePage> {
                     setState(() => amountUnit = value ?? 'mL'),
                 decoration: InputDecoration(labelText: 'Amount Unit'),
               ),
-              ...solutions.entries.where((test) => test.key.compareTo('H\u20820') != 0).map((bottle) => Column(
-                    children: [
-                      Text(bottle.key),
-                      TextField(
-                          decoration: InputDecoration(
-                              labelText: 'Concentration for ${bottle.key}'),
-                          keyboardType: TextInputType.number,
-                          onChanged: (value) => {
-                                if (containsNumber(value))
+              ...solutions.entries
+                  .where((test) => test.key.compareTo('H\u20820') != 0)
+                  .map((bottle) => Column(
+                        children: [
+                          Text(bottle.key),
+                          TextField(
+                              decoration: InputDecoration(
+                                  labelText: 'Concentration for ${bottle.key}'),
+                              keyboardType: TextInputType.number,
+                              onChanged: (value) => {
+                                    if (containsNumber(value))
+                                      concentrations[bottle.key] =
+                                          Concentration(double.tryParse(value)!,
+                                              ConcentrationUnit.mgPerML)
+                                  }),
+                          DropdownButtonFormField<ConcentrationUnit>(
+                            value: unit,
+                            items: ConcentrationUnit.values.map((u) {
+                              return DropdownMenuItem(
+                                value: u,
+                                child: Text(u.displayName),
+                              );
+                            }).toList(),
+                            onChanged: (value) => {
+                              if (concentrations.containsKey(bottle.key) &&
+                                  bottle.key.isNotEmpty)
+                                {
                                   concentrations[bottle.key] = Concentration(
-                                      double.tryParse(value)!,
-                                      ConcentrationUnit.mgPerML)
-                              }),
-                      DropdownButtonFormField<ConcentrationUnit>(
-                        value: unit,
-                        items: ConcentrationUnit.values.map((u) {
-                          return DropdownMenuItem(
-                            value: u,
-                            child: Text(u.displayName),
-                          );
-                        }).toList(),
-                        onChanged: (value) => {
-                          if (concentrations.containsKey(bottle.key) &&
-                              bottle.key.isNotEmpty)
-                            {
-                              concentrations[bottle.key] = Concentration(
-                                  concentrations[bottle.key]!.amount, value!),
-                              setState(() =>
-                                  unit = value ?? ConcentrationUnit.mgPerML)
-                            }
-                        },
-                        decoration: InputDecoration(labelText: 'Units'),
-                      ),
-                    ],
-                  )),
+                                      concentrations[bottle.key]!.amount,
+                                      value!),
+                                  setState(() =>
+                                      unit = value ?? ConcentrationUnit.mgPerML)
+                                }
+                            },
+                            decoration: InputDecoration(labelText: 'Units'),
+                          ),
+                        ],
+                      )),
             ],
           )),
           actions: [
