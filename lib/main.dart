@@ -16,76 +16,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-enum ConcentrationUnit {
-  mgPerML("mg/mL", 1e-3 / 1e-3),
-  ugPerML("ug/mL", 1e-6 / 1e-3),
-  ngPerML("ng/mL", 1e-9 / 1e-3);
 
-  final String displayName;
-  final double multiplier;
-
-  const ConcentrationUnit(this.displayName, this.multiplier);
-}
-
-class Concentration {
-  final double amount;
-  final ConcentrationUnit unit;
-
-  Concentration(this.amount, this.unit);
-
-  @override
-  String toString() {
-    var units = unit.displayName;
-    return '$amount $units';
-  }
-}
-
-enum VolumeUnits {
-  l("L", 1),
-  ml("mL", 1e-3),
-  ul("uL", 1e-9);
-
-  final String displayName;
-  final double multiplier;
-
-  const VolumeUnits(this.displayName, this.multiplier);
-}
-
-class Volume {
-  double amount = 0.0;
-  VolumeUnits units = VolumeUnits.ml;
-
-  Volume(this.amount, this.units);
-
-  @override
-  String toString() {
-    var displayName = units.displayName;
-    return '$amount $displayName';
-  }
-}
-
-class Solution {
-  final String name;
-  final Concentration concentration;
-
-  Solution(this.name, this.concentration);
-}
-
-class Dilutant {
-  final Solution solution;
-  late Volume volume = Volume(0.0, VolumeUnits.ml);
-  Concentration concentration;
-
-  Dilutant(this.solution, this.concentration);
-}
-
-class Dilution {
-  final Volume volume;
-  final Map<String, Concentration> concentrations;
-  final Map<String, Dilutant> dilutants;
-
-  Dilution(this.volume, this.concentrations, this.dilutants);
-}
 
 class BottleHomePage extends StatefulWidget {
   @override
@@ -98,10 +29,32 @@ class _BottleHomePageState extends State<BottleHomePage> {
 
 
   _BottleHomePageState() {
-    solutions.putIfAbsent('H\u20820',
-        () => Solution('H\u20820', Concentration(0.0, ConcentrationUnit.mgPerML)));
+    solutions.putIfAbsent(WATER,
+        () => Solution(WATER, Concentration(0.0, ConcentrationUnit.mgPerML)));
   }
 
+  void _calculateDilutions() {
+
+    List<double>stockConcentrations = extractStockConcentrations(solutions);
+
+    List<List<double>> stockMatrix = createStockMatrix(stockConcentrations);
+
+    List<double>volumeVector = extractDilutionConcentrations(dilutions.first);
+
+    List<List<double>>matrixBb = [volumeVector];
+    List<double>? volumes = solveIt(stockMatrix, matrixBb);
+
+    if (volumes != null) {
+      for (int i = 0; i < volumes.length -1; i++) {
+        dilutions.first.dilutants.values.elementAt(i).volume.amount = volumes[i];
+        dilutions.first.dilutants.values.elementAt(i).volume.units = VolumeUnits.l;
+        print("Use ${volumes[i].toStringAsFixed(2)} mL of Stock ${i + 1}");
+      }
+    } else {
+      print("No valid solution: check concentrations and target values.");
+    }
+    setState(() => 1);
+  }
   void _showAddSolutionDialog() {
     showDialog(
       context: context,
@@ -162,27 +115,6 @@ class _BottleHomePageState extends State<BottleHomePage> {
         );
       },
     );
-  }
-
-  void _calculateDilutions() {
-
-    double Vm = 100; // Total final volume in mL
-    List<List<double>> stockConcentrations = [
-      [100, 0], // Stock 1 (mg/mL for each component)
-      [0, 100], // Stock 2
-      [0, 0]   // Stock 3 (optional additional stock)
-    ];
-    List<double> finalConcentrations = [10, 10]; // Desired final concentrations
-
-    List<double>? volumes = computeMixtureVolumes(Vm, stockConcentrations, finalConcentrations);
-
-    if (volumes != null) {
-      for (int i = 0; i < volumes.length; i++) {
-        print("Use ${volumes[i].toStringAsFixed(2)} mL of Stock ${i + 1}");
-      }
-    } else {
-      print("No valid solution: check concentrations and target values.");
-    }
   }
 
   bool containsNumber(String input) {
