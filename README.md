@@ -1,4 +1,6 @@
 # dilution_calculator
+A dilution calculator which uses the Dart equations LUSolver to calculate the volumes of stock solutions need to create a desired dilution with specified concentration(s) of stock solutions.
+No checking is performed and negative volumes will be calculated.
 
 ![Example Phone](images/phone-ios8.png)
 
