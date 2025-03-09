@@ -1,28 +1,36 @@
-# dilution_calculator
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Display</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.15.2/katex.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.15.2/katex.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.15.2/contrib/auto-render.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            renderMathInElement(document.body);
+        });
+    </script>
+</head>
+<body>
 
-![Example Phone](images/phone-ios8.png)
-
-![Example Phone](images/desktop-macos.png)
-
-
-
-$$
 Great idea! Let's modify the general formulation to always **include water (or another solvent)** as an additional stock solution.
 
 ### **Updated General Case with Water**
 We now consider \( n \) stock solutions **plus water**, making the total number of components **\( n+1 \)**.
 
 - **Stock solutions:**
-  - Each stock solution \( i \) has a concentration **\( C_{i} \)**.
-  - Volume used: **\( V_{i} \)**.
+- Each stock solution \( i \) has a concentration **\( C_{i} \)**.
+- Volume used: **\( V_{i} \)**.
 
 - **Water (or solvent):**
-  - Water has **zero** concentration for all substances: \( C_{\text{water}, j} = 0 \).
-  - Volume used: **\( V_w \)**.
+- Water has **zero** concentration for all substances: \( C_{\text{water}, j} = 0 \).
+- Volume used: **\( V_w \)**.
 
 - **Final mixture:**
-  - The target concentration for each substance in the final solution is **\( C_j' \)**.
-  - Total volume of the final solution: **\( V_f \)**.
+- The target concentration for each substance in the final solution is **\( C_j' \)**.
+- Total volume of the final solution: **\( V_f \)**.
 
 ### **Updated System of Equations**
 For each **substance \( j \)**, the total amount in the final solution must match the total contributed by stock solutions:
@@ -46,11 +54,11 @@ Since **water contains no solutes**, its concentration for any substance is **0*
 Now, our system can be written as:
 
 \[
-\begin{bmatrix} 
-C_{11} & C_{21} & \dots & C_{n1} & 0 \\ 
-C_{12} & C_{22} & \dots & C_{n2} & 0 \\ 
-\vdots & \vdots & \ddots & \vdots & \vdots \\ 
-C_{1m} & C_{2m} & \dots & C_{nm} & 0 \\ 
+\begin{bmatrix}
+C_{11} & C_{21} & \dots & C_{n1} & 0 \\
+C_{12} & C_{22} & \dots & C_{n2} & 0 \\
+\vdots & \vdots & \ddots & \vdots & \vdots \\
+C_{1m} & C_{2m} & \dots & C_{nm} & 0 \\
 1 & 1 & \dots & 1 & 1
 \end{bmatrix}
 \begin{bmatrix} V_1 \\ V_2 \\ \vdots \\ V_n \\ V_w \end{bmatrix}
@@ -59,21 +67,21 @@ C_{1m} & C_{2m} & \dots & C_{nm} & 0 \\
 \]
 
 ### **Explanation of the Terms:**
-- **Coefficient matrix \( A \)**:  
-  - Same as before, but now with an extra **water column**, which has **0s** in the concentration rows and **1** in the volume row.
+- **Coefficient matrix \( A \)**:
+- Same as before, but now with an extra **water column**, which has **0s** in the concentration rows and **1** in the volume row.
 
-- **Unknown vector \( \mathbf{x} \)**:  
-  \[
-  \mathbf{x} =
-  \begin{bmatrix} V_1 \\ V_2 \\ \vdots \\ V_n \\ V_w \end{bmatrix}
-  \]
-  This now includes the volume of water \( V_w \).
+- **Unknown vector \( \mathbf{x} \)**:
+\[
+\mathbf{x} =
+\begin{bmatrix} V_1 \\ V_2 \\ \vdots \\ V_n \\ V_w \end{bmatrix}
+\]
+This now includes the volume of water \( V_w \).
 
 - **Right-hand side vector \( \mathbf{b} \)**:
-  \[
-  \mathbf{b} =
-  \begin{bmatrix} V_f C_1' \\ V_f C_2' \\ \vdots \\ V_f C_m' \\ V_f \end{bmatrix}
-  \]
+\[
+\mathbf{b} =
+\begin{bmatrix} V_f C_1' \\ V_f C_2' \\ \vdots \\ V_f C_m' \\ V_f \end{bmatrix}
+\]
 
 ### **Will This Work for \( n = 1 \)?**
 Yes! If we only have **one stock solution and water** (\( n = 1 \)), our matrix equation reduces to:
@@ -86,26 +94,26 @@ Yes! If we only have **one stock solution and water** (\( n = 1 \)), our matrix 
 \]
 
 Solving:
-1. From the second equation:  
-   \[
-   V_1 + V_w = V_f
-   \]
-   so \( V_w = V_f - V_1 \).
+1. From the second equation:
+\[
+V_1 + V_w = V_f
+\]
+so \( V_w = V_f - V_1 \).
 
 2. Substituting into the first equation:
-   \[
-   C_1 V_1 = V_f C_1'
-   \]
+\[
+C_1 V_1 = V_f C_1'
+\]
 
-   Solving for \( V_1 \):
-   \[
-   V_1 = \frac{V_f C_1'}{C_1}
-   \]
+Solving for \( V_1 \):
+\[
+V_1 = \frac{V_f C_1'}{C_1}
+\]
 
 3. Finally, compute \( V_w \):
-   \[
-   V_w = V_f - \frac{V_f C_1'}{C_1}
-   \]
+\[
+V_w = V_f - \frac{V_f C_1'}{C_1}
+\]
 
 This means **if dilution is needed**, the system automatically accounts for it by adding water.
 
@@ -115,4 +123,5 @@ This means **if dilution is needed**, the system automatically accounts for it b
 - The **total volume constraint ensures the final solution has the correct amount**.
 
 Would you like a numeric example to test this out? 🚀
-$$
+</body>
+</html>
