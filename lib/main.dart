@@ -128,6 +128,17 @@ class _BottleHomePageState extends State<BottleHomePage> {
     return regex.hasMatch(input);
   }
 
+  void _deleteAllStock() {
+    dilutions.clear();
+    solutions.removeWhere((key, solution) => solution.name != WATER);
+    setState(() {});
+  }
+
+  void _deleteAllDilutions() {
+    dilutions.clear();
+    setState(() {});
+  }
+
   void _showAddDilutionDialog() {
     showDialog(
       context: context,
@@ -241,23 +252,41 @@ class _BottleHomePageState extends State<BottleHomePage> {
           if (solutions.isNotEmpty) ...[
             Divider(),
             Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columns: [
-                    DataColumn(label: Text('Solution')),
-                    DataColumn(label: Text('Concentration')),
-                  ],
-                  rows: solutions.entries
-                      .map((bottle) => DataRow(cells: [
-                            DataCell(Text(bottle.key)),
-                            DataCell(
-                                Text(bottle.value.concentration.toString())),
-                          ]))
-                      .toList(),
-                ),
+              child: ListView(
+                children: [
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    FloatingActionButton(
+                      onPressed: _showAddSolutionDialog,
+                      child: Icon(Icons.add),
+                      heroTag: 'addStock',
+                    ),
+                    SizedBox(width: 10),
+                    FloatingActionButton(
+                      onPressed: _deleteAllStock,
+                      child: Icon(Icons.delete),
+                      heroTag: 'Delete All',
+                    )
+                  ]),
+                  Center(
+                      child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columns: const [
+                        DataColumn(label: Text('Stock')),
+                        DataColumn(label: Text('Concentration')),
+                      ],
+                      rows: solutions.entries
+                          .map((bottle) => DataRow(cells: [
+                                DataCell(Text(bottle.key)),
+                                DataCell(Text(
+                                    bottle.value.concentration.toString())),
+                              ]))
+                          .toList(),
+                    ),
+                  ))
+                ],
               ),
-            ),
+            )
           ],
           if (dilutions.isNotEmpty) ...[
             Divider(),
@@ -301,25 +330,28 @@ class _BottleHomePageState extends State<BottleHomePage> {
         ],
       ),
       floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           FloatingActionButton(
-            onPressed: _showAddSolutionDialog,
-            child: Icon(Icons.add),
-            heroTag: 'addBottle',
-          ),
-          SizedBox(width: 10),
-          FloatingActionButton(
             onPressed: _showAddDilutionDialog,
-            child: Icon(Icons.science),
+            child: Icon(Icons.add),
             heroTag: 'addDilution',
           ),
-          SizedBox(width: 10),
-          FloatingActionButton(
-            onPressed: _calculateDilutions,
-            child: Icon(Icons.calculate),
-            heroTag: 'calculate',
-          ),
+
+          if (dilutions.isNotEmpty) ...[
+            SizedBox(width: 10),
+            FloatingActionButton(
+              onPressed: _deleteAllDilutions,
+              child: Icon(Icons.delete),
+              heroTag: 'Delete All',
+            ),
+            SizedBox(width: 10),
+            FloatingActionButton(
+              onPressed: _calculateDilutions,
+              child: Icon(Icons.calculate),
+              heroTag: 'calculate',
+            )
+          ],
         ],
       ),
     );
