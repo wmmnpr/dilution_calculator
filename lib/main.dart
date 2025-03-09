@@ -160,10 +160,10 @@ class _BottleHomePageState extends State<BottleHomePage> {
               ),
               DropdownButtonFormField<String>(
                 value: amountUnit,
-                items: ['L', 'mL'].map((unit) {
+                items: VolumeUnits.values.map((unit) {
                   return DropdownMenuItem(
-                    value: unit,
-                    child: Text(unit),
+                    value: unit.displayName,
+                    child: Text(unit.displayName),
                   );
                 }).toList(),
                 onChanged: (value) =>

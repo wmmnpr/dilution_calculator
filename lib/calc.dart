@@ -33,7 +33,8 @@ class Concentration {
 enum VolumeUnits {
   l("L", 1),
   ml("mL", 1e-3),
-  ul("uL", 1e-9);
+  ul("uL", 1e-6),
+  nl("nL", 1e-9);
 
   final String displayName;
   final double multiplier;
