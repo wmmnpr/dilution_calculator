@@ -6,7 +6,7 @@
 
 
 
-$$
+```md
 Great idea! Let's modify the general formulation to always **include water (or another solvent)** as an additional stock solution.
 
 ### **Updated General Case with Water**
@@ -115,4 +115,3 @@ This means **if dilution is needed**, the system automatically accounts for it b
 - The **total volume constraint ensures the final solution has the correct amount**.
 
 Would you like a numeric example to test this out? 🚀
-$$
