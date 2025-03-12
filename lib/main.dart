@@ -6,6 +6,7 @@ void main() {
   runApp(MyApp());
 }
 
+
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -123,7 +124,7 @@ class _BottleHomePageState extends State<BottleHomePage> {
     );
   }
 
-  bool containsNumber(String input) {
+  bool _containsNumber(String input) {
     final RegExp regex = RegExp(r'\d+(\.\d+)?');
     return regex.hasMatch(input);
   }
@@ -137,6 +138,21 @@ class _BottleHomePageState extends State<BottleHomePage> {
   void _deleteAllDilutions() {
     dilutions.clear();
     setState(() {});
+  }
+
+  void _diluteDilutionBy(int dilutionListIndex) async {
+    Dilution dilution = dilutions.elementAt(dilutionListIndex);
+    print("select is: ${dilution.volume}");
+    double? result = await showDialog<double>(
+      context: context,
+      builder: (context) => DiluteByInputDialog(),
+    );
+
+    if (result != null) {
+      setState(() {
+        //_inputValue = result;
+      });
+    }
   }
 
   void _showAddDilutionDialog() {
@@ -180,7 +196,7 @@ class _BottleHomePageState extends State<BottleHomePage> {
                                   labelText: 'Concentration for ${bottle.key}'),
                               keyboardType: TextInputType.number,
                               onChanged: (value) => {
-                                    if (containsNumber(value))
+                                    if (_containsNumber(value))
                                       concentrations[bottle.key] =
                                           Concentration(double.tryParse(value)!,
                                               ConcentrationUnit.mgPerML)
@@ -314,22 +330,38 @@ class _BottleHomePageState extends State<BottleHomePage> {
                                 Text(textAlign: TextAlign.center, 'Action'))),
                   ],
                   rows: [
-                    ...dilutions.asMap().entries
+                    ...dilutions
+                        .asMap()
+                        .entries
                         .map((dilution) => DataRow(cells: [
                               DataCell(Text(dilution.value.volume.toString())),
-                              ...dilution.value.dilutants.entries.expand((dilutant) =>
-                                  [
-                                    DataCell(Text(dilutant.value.concentration
-                                        .toString())),
-                                    DataCell(
-                                        Text(dilutant.value.volume.toString()))
-                                  ]),
-                              DataCell(ElevatedButton(
-                                onPressed: () {
-                                  print("Offset is: ${dilution.key}");
-                                },
-                                child: Icon(Icons.water_drop_outlined),
-                              )),
+                              ...dilution.value.dilutants.entries
+                                  .expand((dilutant) => [
+                                        DataCell(Text(dilutant
+                                            .value.concentration
+                                            .toString())),
+                                        DataCell(Text(
+                                            dilutant.value.volume.toString()))
+                                      ]),
+                              DataCell(
+                                PopupMenuButton<String>(
+                                  onSelected: (value) {
+                                    if (value == 'diluteBy') {
+                                      _diluteDilutionBy(dilution.key);
+                                    } else if (value == 'delete') {
+                                      print('Delete');
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(
+                                        value: 'diluteBy', child: Text('Dilute by ...')),
+                                    const PopupMenuItem(
+                                        value: 'delete', child: Text('Delete')),
+                                  ],
+                                  child: const Icon(
+                                      Icons.more_vert), // Three-dot menu
+                                ),
+                              )
                             ]))
                         .toList(),
                   ],
@@ -363,6 +395,54 @@ class _BottleHomePageState extends State<BottleHomePage> {
           ],
         ],
       ),
+    );
+  }
+}
+
+class DiluteByInputDialog extends StatefulWidget {
+  @override
+  _DiluteByInputDialogState createState() => _DiluteByInputDialogState();
+}
+
+class _DiluteByInputDialogState extends State<DiluteByInputDialog> {
+  final TextEditingController _controller = TextEditingController();
+  String? _errorMessage;
+
+  void _submit() {
+    double? value = double.tryParse(_controller.text);
+    if (value == null) {
+      setState(() {
+        _errorMessage = "Please enter a valid number";
+      });
+      return;
+    }
+
+    Navigator.of(context).pop(value); // Return the entered double
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text("Dilute by factor"),
+      content: TextField(
+        controller: _controller,
+        keyboardType: TextInputType.numberWithOptions(decimal: true),
+        decoration: InputDecoration(
+          labelText: "Number",
+          errorText: _errorMessage,
+        ),
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(), // Close without returning
+          child: Text("Cancel"),
+        ),
+        ElevatedButton(
+          onPressed: _submit,
+          child: Text("OK"),
+        ),
+      ],
     );
   }
 }
