@@ -308,18 +308,28 @@ class _BottleHomePageState extends State<BottleHomePage> {
                                       textAlign: TextAlign.center,
                                       'Vol.\n${dilution.key}')))
                         ]),
+                    const DataColumn(
+                        label: SizedBox(
+                            child:
+                                Text(textAlign: TextAlign.center, 'Action'))),
                   ],
                   rows: [
-                    ...dilutions
+                    ...dilutions.asMap().entries
                         .map((dilution) => DataRow(cells: [
-                              DataCell(Text(dilution.volume.toString())),
-                              ...dilution.dilutants.entries.expand((dilutant) =>
+                              DataCell(Text(dilution.value.volume.toString())),
+                              ...dilution.value.dilutants.entries.expand((dilutant) =>
                                   [
                                     DataCell(Text(dilutant.value.concentration
                                         .toString())),
                                     DataCell(
                                         Text(dilutant.value.volume.toString()))
-                                  ])
+                                  ]),
+                              DataCell(ElevatedButton(
+                                onPressed: () {
+                                  print("Offset is: ${dilution.key}");
+                                },
+                                child: Icon(Icons.water_drop_outlined),
+                              )),
                             ]))
                         .toList(),
                   ],
@@ -337,7 +347,6 @@ class _BottleHomePageState extends State<BottleHomePage> {
             child: Icon(Icons.add),
             heroTag: 'addDilution',
           ),
-
           if (dilutions.isNotEmpty) ...[
             SizedBox(width: 10),
             FloatingActionButton(
