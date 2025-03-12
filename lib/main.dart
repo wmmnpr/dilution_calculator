@@ -142,6 +142,11 @@ class _BottleHomePageState extends State<BottleHomePage> {
 
   void _diluteDilutionBy(int dilutionListIndex) async {
     Dilution dilution = dilutions.elementAt(dilutionListIndex);
+
+    Dilution copy = dilution.copy();
+    dilutions.add(copy);
+
+
     print("select is: ${dilution.volume}");
     double? result = await showDialog<double>(
       context: context,
