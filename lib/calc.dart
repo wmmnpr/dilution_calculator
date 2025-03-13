@@ -57,7 +57,8 @@ class Volume {
   @override
   String toString() {
     var displayName = units.displayName;
-    return '$amount $displayName';
+    var amountRounded = amount.toStringAsFixed(1);
+    return '$amountRounded. $displayName';
   }
 }
 
