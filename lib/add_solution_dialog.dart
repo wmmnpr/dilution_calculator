@@ -4,8 +4,7 @@ import 'calc.dart';
 
 class AddSolutionDialog extends StatelessWidget {
   final String title;
-  final String content;
-  final VoidCallback? onConfirm;
+  final VoidCallback onConfirm;
   final VoidCallback? onCancel;
   final Map<String, Solution> solutions;
 
@@ -13,8 +12,7 @@ class AddSolutionDialog extends StatelessWidget {
       {Key? key,
       required this.solutions,
       required this.title,
-      required this.content,
-      this.onConfirm,
+      required this.onConfirm,
       this.onCancel})
       : super(key: key);
 
@@ -64,7 +62,7 @@ class AddSolutionDialog extends StatelessWidget {
                   name,
                   () =>
                       Solution(name, Concentration(concentrationValue, unit)));
-
+              onConfirm();
               Navigator.of(context).pop();
             }
           },

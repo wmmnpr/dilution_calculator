@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
+import 'add_solution_dialog.dart';
 import 'calc.dart';
 import 'dilution_scroll_view.dart';
 
 void main() {
   runApp(MyApp());
 }
-
 
 class MyApp extends StatelessWidget {
   @override
@@ -67,59 +67,13 @@ class _BottleHomePageState extends State<BottleHomePage> {
     showDialog(
       context: context,
       builder: (context) {
-        String name = '';
-        double concentrationValue = 0;
-        ConcentrationUnit unit = ConcentrationUnit.mgPerML;
-        return AlertDialog(
-          title: Text('Add Solution'),
-          content: SingleChildScrollView(
-              child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                decoration: InputDecoration(labelText: 'Solution'),
-                onChanged: (value) => name = value,
-              ),
-              TextField(
-                decoration: InputDecoration(labelText: 'Concentration'),
-                keyboardType: TextInputType.number,
-                onChanged: (value) =>
-                    concentrationValue = double.tryParse(value) ?? 0,
-              ),
-              DropdownButtonFormField<ConcentrationUnit>(
-                value: unit,
-                items: ConcentrationUnit.values.map((u) {
-                  return DropdownMenuItem(
-                    value: u,
-                    child: Text(u.displayName),
-                  );
-                }).toList(),
-                onChanged: (value) =>
-                    setState(() => unit = value ?? ConcentrationUnit.mgPerML),
-                decoration: InputDecoration(labelText: 'Units'),
-              ),
-            ],
-          )),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (name.isNotEmpty) {
-                  setState(() {
-                    solutions.putIfAbsent(
-                        name,
-                        () => Solution(
-                            name, Concentration(concentrationValue, unit)));
-                  });
-                  Navigator.of(context).pop();
-                }
-              },
-              child: Text('Add'),
-            ),
-          ],
+        return AddSolutionDialog(
+          solutions: solutions,
+          title: "Add Solution",
+          onConfirm: ()=>{
+            setState(() {
+            })
+          }
         );
       },
     );
@@ -146,7 +100,6 @@ class _BottleHomePageState extends State<BottleHomePage> {
 
     Dilution copy = dilution.copy();
     dilutions.add(copy);
-
 
     print("select is: ${dilution.volume}");
     double? result = await showDialog<double>(
@@ -314,9 +267,7 @@ class _BottleHomePageState extends State<BottleHomePage> {
             Divider(),
             Expanded(
               child: DilutionScrollViewScrollView(
-                dilutions: dilutions,
-                onDiluteBy: _diluteDilutionBy
-              ),
+                  dilutions: dilutions, onDiluteBy: _diluteDilutionBy),
             ),
           ],
         ],
@@ -385,7 +336,8 @@ class _DiluteByInputDialogState extends State<DiluteByInputDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(), // Close without returning
+          onPressed: () => Navigator.of(context).pop(),
+          // Close without returning
           child: Text("Cancel"),
         ),
         ElevatedButton(
