@@ -170,8 +170,17 @@ class _BottleHomePageState extends State<BottleHomePage> {
           if (dilutions.isNotEmpty) ...[
             const Divider(),
             Expanded(
-              child: DilutionScrollViewScrollView(
-                  dilutions: dilutions, onDiluteBy: _diluteDilutionBy),
+              child: Column(
+                children: dilutions
+                    .asMap().entries.map((dilutionEntry) => Expanded(
+                  child: DilutionScrollViewScrollView(
+                    dilutionIndex: dilutionEntry.key,
+                    dilutions: [dilutionEntry.value], // Pass a list with a single element
+                    onDiluteBy: _diluteDilutionBy,
+                  ),
+                ))
+                    .toList(),
+              ),
             ),
           ],
         ],
