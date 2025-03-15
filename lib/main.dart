@@ -51,7 +51,7 @@ class _BottleHomePageState extends State<BottleHomePage> {
             volumes[i] / targetVolume.multiplier;
         dilutions.first.dilutants.values.elementAt(i).volume.units =
             targetVolume;
-        print("Use ${volumes[i].toStringAsFixed(4)} mL of Stock ${i + 1}");
+        //print("Use ${volumes[i].toStringAsFixed(4)} mL of Stock ${i + 1}");
       }
       dilutions.first.dilutants.putIfAbsent(
           WATER,
@@ -111,10 +111,6 @@ class _BottleHomePageState extends State<BottleHomePage> {
     showDialog(
       context: context,
       builder: (context) {
-        Map<String, Concentration> concentrations = <String, Concentration>{};
-        String amount = '';
-        String amountUnit = 'mL';
-        ConcentrationUnit unit = ConcentrationUnit.mgPerML;
         return AddDilutionDialog(
           solutions: solutions,
           dilutions: dilutions,
@@ -129,24 +125,24 @@ class _BottleHomePageState extends State<BottleHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Dilution Calculator')),
+      appBar: AppBar(title: const Text('Dilution Calculator')),
       body: Column(
         children: [
           if (solutions.isNotEmpty) ...[
-            Divider(),
+            const Divider(),
             Expanded(
               child: ListView(
                 children: [
                   Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     FloatingActionButton(
                       onPressed: _showAddSolutionDialog,
-                      child: Icon(Icons.add),
+                      child: const Icon(Icons.add),
                       heroTag: 'addStock',
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     FloatingActionButton(
                       onPressed: _deleteAllStock,
-                      child: Icon(Icons.delete),
+                      child: const Icon(Icons.delete),
                       heroTag: 'Delete All',
                     )
                   ]),
@@ -172,7 +168,7 @@ class _BottleHomePageState extends State<BottleHomePage> {
             )
           ],
           if (dilutions.isNotEmpty) ...[
-            Divider(),
+            const Divider(),
             Expanded(
               child: DilutionScrollViewScrollView(
                   dilutions: dilutions, onDiluteBy: _diluteDilutionBy),
@@ -185,21 +181,21 @@ class _BottleHomePageState extends State<BottleHomePage> {
         children: [
           FloatingActionButton(
             onPressed: _showAddDilutionDialog,
-            child: Icon(Icons.add),
+            child: const Icon(Icons.add),
             heroTag: 'addDilution',
           ),
           if (dilutions.isNotEmpty) ...[
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             FloatingActionButton(
               onPressed: _deleteAllDilutions,
-              child: Icon(Icons.delete),
               heroTag: 'Delete All',
+              child: const Icon(Icons.delete),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             FloatingActionButton(
               onPressed: _calculateDilutions,
-              child: Icon(Icons.calculate),
               heroTag: 'calculate',
+              child: const Icon(Icons.calculate),
             )
           ],
         ],
