@@ -4,6 +4,11 @@ const String WATER = 'H\u20820';
 final Solution STOCK_WATER =
     Solution(WATER, Concentration(0.0, ConcentrationUnit.mgPerML));
 
+bool containsNumber(String input) {
+  final RegExp regex = RegExp(r'\d+(\.\d+)?');
+  return regex.hasMatch(input);
+}
+
 enum ConcentrationUnit {
   mgPerML("mg/mL", 1e-3 / 1e-3),
   ugPerML("ug/mL", 1e-6 / 1e-3),
