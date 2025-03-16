@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'add_solution_dialog.dart';
 import 'calc.dart';
 import 'dilute_by_dialog.dart';
-import 'dilution_scroll_view.dart';
+import 'dilution_view.dart';
 
 void main() {
   runApp(MyApp());
@@ -170,16 +170,22 @@ class _BottleHomePageState extends State<BottleHomePage> {
           if (dilutions.isNotEmpty) ...[
             const Divider(),
             Expanded(
-              child: Column(
-                children: dilutions
-                    .asMap().entries.map((dilutionEntry) => Expanded(
-                  child: DilutionScrollViewScrollView(
-                    dilutionIndex: dilutionEntry.key,
-                    dilutions: [dilutionEntry.value], // Pass a list with a single element
-                    onDiluteBy: _diluteDilutionBy,
-                  ),
-                ))
-                    .toList(),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Column(
+                  children: dilutions
+                      .asMap()
+                      .entries
+                      .map((dilutionEntry) => Expanded(
+                            child: SimpleDilutionDataTable(
+                              dilutionIndex: dilutionEntry.key,
+                              dilutions: [dilutionEntry.value],
+                              // Pass a list with a single element
+                              onDiluteBy: _diluteDilutionBy,
+                            ),
+                          ))
+                      .toList(),
+                ),
               ),
             ),
           ],

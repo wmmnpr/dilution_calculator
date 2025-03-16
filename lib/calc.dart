@@ -63,7 +63,7 @@ class Volume {
   String toString() {
     var displayName = units.displayName;
     var amountRounded = amount.toStringAsFixed(1);
-    return '$amountRounded. $displayName';
+    return '$amountRounded $displayName';
   }
 }
 
