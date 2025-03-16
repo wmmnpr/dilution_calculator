@@ -2,7 +2,7 @@ import 'package:equations/equations.dart';
 
 const String WATER = 'H\u20820';
 final Solution STOCK_WATER =
-Solution(WATER, Concentration(0.0, ConcentrationUnit.mgPerML));
+    Solution(WATER, Concentration(0.0, ConcentrationUnit.mgPerML));
 
 bool containsNumber(String input) {
   final RegExp regex = RegExp(r'\d+(\.\d+)?');
@@ -55,9 +55,7 @@ class Volume {
 
   Volume(this.amount, this.units);
 
-  Volume.copy(Volume v)
-      : amount = v.amount,
-        units = v.units;
+  Volume copy() => Volume(amount, units);
 
   @override
   String toString() {
@@ -88,15 +86,11 @@ class Dilutant {
   Dilutant.n(this.solution, this.concentration, this.volume);
 
   Dilutant copy() {
-    return Dilutant.n(
-        solution.copy(), concentration.copy(), Volume.copy(volume));
+    return Dilutant.n(solution.copy(), concentration.copy(), volume.copy());
   }
 }
 
-enum DilutionType {
-  SIMPLE,
-  SERIAL
-}
+enum DilutionType { SIMPLE, SERIAL }
 
 class Dilution {
   DilutionType dilutionType;
@@ -104,33 +98,37 @@ class Dilution {
   Map<String, Concentration> concentrations;
   Map<String, Dilutant> dilutants;
 
-  Dilution({required this.volume, required this.concentrations, required this.dilutants, this.dilutionType = DilutionType.SIMPLE});
+  Dilution(
+      {required this.volume,
+      required this.concentrations,
+      required this.dilutants,
+      this.dilutionType = DilutionType.SIMPLE});
 
-  Dilution copy() {
-    Volume copyVolume = Volume.copy(volume);
-    Dilution copy = Dilution(volume: copyVolume, concentrations: concentrations, dilutants: dilutants);
-    return copy;
-  }
+  Dilution copy() => Dilution(
+      volume: volume.copy(),
+      concentrations: concentrations.map((k, v) => MapEntry(k, v.copy())),
+      dilutants: dilutants.map((k, v) => MapEntry(k, v.copy())));
 
   Dilution compact(String name, Volume volume) {
-    Dilution dilution = Dilution(volume: volume, concentrations: concentrations, dilutants: dilutants);
+    Dilution dilution = Dilution(
+        volume: volume,
+        concentrations: concentrations.map((k, v) => MapEntry(k, v.copy())),
+        dilutants: dilutants.map((k, v) => MapEntry(k, v.copy())));
     return dilution;
   }
-
 }
 
 /// Extract stock solution concentrations into list which will be used
 /// as diagonal for system of linear equations
 List<double> extractStockConcentrations(Map<String, Solution> solutions) {
   List<double> stockConcentrations = [];
-  solutions.entries.forEach((stock) =>
-  {
-    if (stock.key.compareTo(WATER) != 0)
-      {
-        stockConcentrations.add(stock.value.concentration.amount *
-            stock.value.concentration.unit.multiplier)
-      }
-  });
+  solutions.entries.forEach((stock) => {
+        if (stock.key.compareTo(WATER) != 0)
+          {
+            stockConcentrations.add(stock.value.concentration.amount *
+                stock.value.concentration.unit.multiplier)
+          }
+      });
   //add Water add end
   stockConcentrations.add(1.0);
   return stockConcentrations;
@@ -140,15 +138,14 @@ List<double> extractDilutionConcentrations(Dilution dilution) {
   List<double> dilutionConcentrations = [];
   double totalVolumeCalc =
       dilution.volume.amount * dilution.volume.units.multiplier;
-  dilution.dilutants.entries.forEach((dilutant) =>
-  {
-    if (dilutant.key.compareTo(WATER) != 0)
-      {
-        dilutionConcentrations.add(dilutant.value.concentration.amount *
-            dilutant.value.concentration.unit.multiplier *
-            totalVolumeCalc)
-      }
-  });
+  dilution.dilutants.entries.forEach((dilutant) => {
+        if (dilutant.key.compareTo(WATER) != 0)
+          {
+            dilutionConcentrations.add(dilutant.value.concentration.amount *
+                dilutant.value.concentration.unit.multiplier *
+                totalVolumeCalc)
+          }
+      });
   //add Water add end
   dilutionConcentrations.add(totalVolumeCalc);
   return dilutionConcentrations;
@@ -159,19 +156,17 @@ List<List<double>> createStockMatrix(List<double> diagonalValues) {
   int N = diagonalValues.length;
   return List.generate(
       N,
-          (i) =>
-          List.generate(
-              N,
-                  (j) =>
-              (i == N - 1)
-                  ? 1
-                  : (i == j)
+      (i) => List.generate(
+          N,
+          (j) => (i == N - 1)
+              ? 1
+              : (i == j)
                   ? diagonalValues[i]
                   : 0.0));
 }
 
-List<double> solveItTranspose(List<List<double>> matrixAa,
-    List<List<double>> matrixBb) {
+List<double> solveItTranspose(
+    List<List<double>> matrixAa, List<List<double>> matrixBb) {
   final matrixA = RealMatrix.fromData(
       rows: matrixAa.length, columns: matrixAa.length, data: matrixAa);
 
@@ -189,7 +184,7 @@ List<double> solveItTranspose(List<List<double>> matrixAa,
 
   final solver = LUSolver(
       matrix:
-      RealMatrix.fromData(rows: 2, columns: 2, data: atA.toListOfList()),
+          RealMatrix.fromData(rows: 2, columns: 2, data: atA.toListOfList()),
       knownValues: atB.flattenData);
 
   final List<double> solution = solver.solve();

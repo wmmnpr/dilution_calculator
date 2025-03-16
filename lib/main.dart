@@ -88,6 +88,30 @@ class _BottleHomePageState extends State<BottleHomePage> {
     setState(() {});
   }
 
+  Dilution _createDilution(final Dilution dilution, final String dilutantName,
+      double dilutionFactor) {
+    Map<String, Concentration> concentrations = dilution.concentrations.map(
+        (k, v) =>
+            MapEntry(k, Concentration(v.amount / dilutionFactor, v.unit)));
+    Map<String, Dilutant> dilutants = <String, Dilutant>{};
+    Solution solution =
+        Solution(dilutantName, Concentration(0.0, ConcentrationUnit.mgPerML));
+    solutions.putIfAbsent(dilutantName, () => solution);
+    dilutants.putIfAbsent(
+        dilutantName,
+        () =>
+            Dilutant(solution, Concentration(0.0, ConcentrationUnit.mgPerML)));
+    dilutants.putIfAbsent(
+        WATER,
+        () => Dilutant(
+            STOCK_WATER, Concentration(0.0, ConcentrationUnit.mgPerML)));
+    Dilution newDilution = Dilution(
+        volume: dilution.volume.copy(),
+        concentrations: concentrations,
+        dilutants: dilutants);
+    return newDilution;
+  }
+
   void _diluteDilutionBy(String action, int dilutionListIndex) async {
     if (action == 'delete') {
       dilutions.removeAt(dilutionListIndex);
@@ -98,12 +122,9 @@ class _BottleHomePageState extends State<BottleHomePage> {
       );
       if (result! > 1.0) {
         Dilution dilution = dilutions.elementAt(dilutionListIndex);
-        dilution.dilutionType = DilutionType.SERIAL;
-
-        Dilution copy = dilution.copy();
-        copy.concentrations = copy.concentrations
-            .map((k, v) => MapEntry(k, Concentration(v.amount / result, v.unit)));
-        dilutions.add(copy);
+        String dilutantName = "d_$dilutionListIndex";
+        Dilution dilutionNew = _createDilution(dilution, dilutantName, result);
+        dilutions.add(dilutionNew);
       }
     }
 
@@ -189,8 +210,6 @@ class _BottleHomePageState extends State<BottleHomePage> {
                               onDiluteBy: _diluteDilutionBy,
                             ),
                           ))
-                      .toList()
-                      .reversed
                       .toList(),
                 ),
               ),
