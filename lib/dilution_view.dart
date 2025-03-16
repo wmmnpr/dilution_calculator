@@ -7,7 +7,7 @@ class SimpleDilutionDataTable extends StatelessWidget {
   final ScrollPhysics? physics;
   final int dilutionIndex;
   final List<Dilution> dilutions;
-  final void Function(int) onDiluteBy;
+  final void Function(String, int) onDiluteBy;
 
   const SimpleDilutionDataTable(
       {super.key,
@@ -19,59 +19,106 @@ class SimpleDilutionDataTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DataTable(
-      columns: [
-        const DataColumn(label: Text(textAlign: TextAlign.center, 'Dil.\nId')),
-        const DataColumn(label: Text(textAlign: TextAlign.center, 'Volume')),
-        ...dilutions.first.dilutants.entries.expand((dilution) => [
-              DataColumn(
-                  label: SizedBox(
-                      child: Text(
-                          textAlign: TextAlign.center,
-                          'Conc.\n${dilution.key}'))),
-              DataColumn(
-                  label: SizedBox(
-                      child: Text(
-                          textAlign: TextAlign.center,
-                          'Vol.\n${dilution.key}')))
-            ]),
-        const DataColumn(
-            label:
-                SizedBox(child: Text(textAlign: TextAlign.center, 'Action'))),
-      ],
-      rows: [
-        ...dilutions
-            .asMap()
-            .entries
-            .map((dilution) => DataRow(cells: [
-                  DataCell(
-                      Text(textAlign: TextAlign.center, 'd_${dilutionIndex}')),
-                  DataCell(Text(dilution.value.volume.toString())),
-                  ...dilution.value.dilutants.entries.expand((dilutant) => [
-                        DataCell(Text(dilutant.value.concentration.toString())),
-                        DataCell(Text(dilutant.value.volume.toString()))
-                      ]),
-                  DataCell(
-                    PopupMenuButton<String>(
-                      onSelected: (value) {
-                        if (value == 'diluteBy') {
-                          onDiluteBy(dilutionIndex);
-                        } else if (value == 'delete') {
-                          print('Delete');
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(
-                            value: 'diluteBy', child: Text('Dilute by ...')),
-                        const PopupMenuItem(
-                            value: 'delete', child: Text('Delete')),
-                      ],
-                      child: const Icon(Icons.more_vert), // Three-dot menu
-                    ),
-                  )
-                ]))
-            .toList(),
-      ],
-    );
+    if (dilutions.first.dilutionType == DilutionType.SERIAL) {
+      return DataTable(
+        columns: [
+          const DataColumn(label: Text(textAlign: TextAlign.center, 'Dil\nId')),
+          const DataColumn(label: Text(textAlign: TextAlign.center, 'Volume')),
+          ...dilutions.first.concentrations.entries.expand((dilution) => [
+                DataColumn(
+                    label: SizedBox(
+                        child: Text(
+                            textAlign: TextAlign.center,
+                            'Conc.\n${dilution.key}'))),
+              ]),
+          const DataColumn(
+              label:
+                  SizedBox(child: Text(textAlign: TextAlign.center, 'Action'))),
+        ],
+        rows: [
+          ...dilutions
+              .asMap()
+              .entries
+              .map((dilution) => DataRow(cells: [
+                    DataCell(Text(
+                        textAlign: TextAlign.center, 'd_${dilutionIndex}')),
+                    DataCell(Text(dilution.value.volume.toString())),
+
+                    ...dilution.value.concentrations.entries.expand((con) => [
+                          DataCell(
+                              Text(con.value.toString()))
+                        ]),
+                    DataCell(
+                      PopupMenuButton<String>(
+                        onSelected: (value) {
+                          onDiluteBy(value, dilutionIndex);
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                              value: 'diluteBy', child: Text('Dilute by ...')),
+                          const PopupMenuItem(
+                              value: 'delete', child: Text('Delete')),
+                        ],
+                        child: const Icon(Icons.more_vert), // Three-dot menu
+                      ),
+                    )
+                  ]))
+              .toList(),
+        ],
+      );
+    } else {
+      return DataTable(
+        columns: [
+          const DataColumn(
+              label: Text(textAlign: TextAlign.center, 'Dil.\nId')),
+          const DataColumn(label: Text(textAlign: TextAlign.center, 'Volume')),
+          ...dilutions.first.dilutants.entries.expand((dilution) => [
+                DataColumn(
+                    label: SizedBox(
+                        child: Text(
+                            textAlign: TextAlign.center,
+                            'Conc.\n${dilution.key}'))),
+                DataColumn(
+                    label: SizedBox(
+                        child: Text(
+                            textAlign: TextAlign.center,
+                            'Vol.\n${dilution.key}')))
+              ]),
+          const DataColumn(
+              label:
+                  SizedBox(child: Text(textAlign: TextAlign.center, 'Action'))),
+        ],
+        rows: [
+          ...dilutions
+              .asMap()
+              .entries
+              .map((dilution) => DataRow(cells: [
+                    DataCell(Text(
+                        textAlign: TextAlign.center, 'd_${dilutionIndex}')),
+                    DataCell(Text(dilution.value.volume.toString())),
+                    ...dilution.value.dilutants.entries.expand((dilutant) => [
+                          DataCell(
+                              Text(dilutant.value.concentration.toString())),
+                          DataCell(Text(dilutant.value.volume.toString()))
+                        ]),
+                    DataCell(
+                      PopupMenuButton<String>(
+                        onSelected: (value) {
+                          onDiluteBy(value, dilutionIndex);
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                              value: 'diluteBy', child: Text('Dilute by ...')),
+                          const PopupMenuItem(
+                              value: 'delete', child: Text('Delete')),
+                        ],
+                        child: const Icon(Icons.more_vert), // Three-dot menu
+                      ),
+                    )
+                  ]))
+              .toList(),
+        ],
+      );
+    }
   }
 }

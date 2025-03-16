@@ -98,12 +98,12 @@ class AddDilutionDialog extends StatelessWidget {
                         name, () => Dilutant(solutions[name]!, conc))
                   });
               dilutions.add(Dilution(
-                  Volume(
+                  volume: Volume(
                       double.parse(amount),
                       VolumeUnits.values.firstWhere((unit) =>
                           unit.displayName.compareTo(amountUnit) == 0)),
-                  concentrations,
-                  dilutants));
+                  concentrations: concentrations,
+                  dilutants: dilutants));
               onConfirm();
               Navigator.of(context).pop();
             }

@@ -88,23 +88,28 @@ class _BottleHomePageState extends State<BottleHomePage> {
     setState(() {});
   }
 
-  void _diluteDilutionBy(int dilutionListIndex) async {
-    Dilution dilution = dilutions.elementAt(dilutionListIndex);
+  void _diluteDilutionBy(String action, int dilutionListIndex) async {
+    if (action == 'delete') {
+      dilutions.removeAt(dilutionListIndex);
+    } else {
+      double? result = await showDialog<double>(
+        context: context,
+        builder: (context) => DiluteByInputDialog(),
+      );
+      if (result! > 1.0) {
+        Dilution dilution = dilutions.elementAt(dilutionListIndex);
+        dilution.dilutionType = DilutionType.SERIAL;
 
-    Dilution copy = dilution.copy();
-    dilutions.add(copy);
-
-    print("select is: ${dilution.volume}");
-    double? result = await showDialog<double>(
-      context: context,
-      builder: (context) => DiluteByInputDialog(),
-    );
-
-    if (result != null) {
-      setState(() {
-        //_inputValue = result;
-      });
+        Dilution copy = dilution.copy();
+        copy.concentrations = copy.concentrations
+            .map((k, v) => MapEntry(k, Concentration(v.amount / result, v.unit)));
+        dilutions.add(copy);
+      }
     }
+
+    setState(() {
+      //_inputValue = result;
+    });
   }
 
   void _showAddDilutionDialog() {
@@ -184,6 +189,8 @@ class _BottleHomePageState extends State<BottleHomePage> {
                               onDiluteBy: _diluteDilutionBy,
                             ),
                           ))
+                      .toList()
+                      .reversed
                       .toList(),
                 ),
               ),

@@ -21,8 +21,8 @@ enum ConcentrationUnit {
 }
 
 class Concentration {
-  final double amount;
-  final ConcentrationUnit unit;
+  double amount;
+  ConcentrationUnit unit;
 
   Concentration(this.amount, this.unit);
 
@@ -93,21 +93,27 @@ class Dilutant {
   }
 }
 
-class Dilution {
-  final Volume volume;
-  final Map<String, Concentration> concentrations;
-  final Map<String, Dilutant> dilutants;
+enum DilutionType {
+  SIMPLE,
+  SERIAL
+}
 
-  Dilution(this.volume, this.concentrations, this.dilutants);
+class Dilution {
+  DilutionType dilutionType;
+  Volume volume;
+  Map<String, Concentration> concentrations;
+  Map<String, Dilutant> dilutants;
+
+  Dilution({required this.volume, required this.concentrations, required this.dilutants, this.dilutionType = DilutionType.SIMPLE});
 
   Dilution copy() {
     Volume copyVolume = Volume.copy(volume);
-    Dilution copy = Dilution(copyVolume, concentrations, dilutants);
+    Dilution copy = Dilution(volume: copyVolume, concentrations: concentrations, dilutants: dilutants);
     return copy;
   }
 
   Dilution compact(String name, Volume volume) {
-    Dilution dilution = Dilution(volume, concentrations, dilutants);
+    Dilution dilution = Dilution(volume: volume, concentrations: concentrations, dilutants: dilutants);
     return dilution;
   }
 
