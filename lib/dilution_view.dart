@@ -20,52 +20,55 @@ class SimpleDilutionDataTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (dilutions.first.dilutionType == DilutionType.SERIAL) {
-      return DataTable(
-        columns: [
-          const DataColumn(label: Text(textAlign: TextAlign.center, 'Dil\nId')),
-          const DataColumn(label: Text(textAlign: TextAlign.center, 'Volume')),
-          ...dilutions.first.concentrations.entries.expand((dilution) => [
-                DataColumn(
-                    label: SizedBox(
-                        child: Text(
-                            textAlign: TextAlign.center,
-                            'Conc.\n${dilution.key}'))),
-              ]),
-          const DataColumn(
-              label:
-                  SizedBox(child: Text(textAlign: TextAlign.center, 'Action'))),
-        ],
-        rows: [
-          ...dilutions
-              .asMap()
-              .entries
-              .map((dilution) => DataRow(cells: [
-                    DataCell(Text(
-                        textAlign: TextAlign.center, 'd_${dilutionIndex}')),
-                    DataCell(Text(dilution.value.volume.toString())),
-
-                    ...dilution.value.concentrations.entries.expand((con) => [
-                          DataCell(
-                              Text(con.value.toString()))
-                        ]),
-                    DataCell(
-                      PopupMenuButton<String>(
-                        onSelected: (value) {
-                          onDiluteBy(value, dilutionIndex);
-                        },
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                              value: 'diluteBy', child: Text('Dilute by ...')),
-                          const PopupMenuItem(
-                              value: 'delete', child: Text('Delete')),
-                        ],
-                        child: const Icon(Icons.more_vert), // Three-dot menu
-                      ),
-                    )
-                  ]))
-              .toList(),
-        ],
-      );
+      return DataTable(columns: [
+        const DataColumn(label: Text(textAlign: TextAlign.center, 'Dil.\nId')),
+        const DataColumn(label: Text(textAlign: TextAlign.center, 'Volume')),
+        ...dilutions.first.concentrations.entries.expand((conc) => [
+              DataColumn(
+                  label: SizedBox(
+                      child: Text(
+                          textAlign: TextAlign.center, 'Conc.\n${conc.key}'))),
+            ]),
+        ...dilutions.first.dilutants.entries.expand((dilutant) => [
+          DataColumn(
+              label: SizedBox(
+                  child: Text(
+                      textAlign: TextAlign.center, 'Vol.\n${dilutant.key}')))
+        ]),
+        const DataColumn(
+            label:
+                SizedBox(child: Text(textAlign: TextAlign.center, 'Action'))),
+      ], rows: [
+        ...dilutions
+            .asMap()
+            .entries
+            .map((dilution) => DataRow(cells: [
+                  DataCell(
+                      Text(textAlign: TextAlign.center, 'd_${dilutionIndex}')),
+                  DataCell(Text(dilution.value.volume.toString())),
+                  ...dilution.value.concentrations.entries.expand((conc) => [
+                        DataCell(Text(conc.value.toString())),
+                      ]),
+                  ...dilution.value.dilutants.entries.expand((dilutant) => [
+                        DataCell(Text(dilutant.value.volume.toString())),
+                      ]),
+                  DataCell(
+                    PopupMenuButton<String>(
+                      onSelected: (value) {
+                        onDiluteBy(value, dilutionIndex);
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                            value: 'diluteBy', child: Text('Dilute by ...')),
+                        const PopupMenuItem(
+                            value: 'delete', child: Text('Delete')),
+                      ],
+                      child: const Icon(Icons.more_vert), // Three-dot menu
+                    ),
+                  )
+                ]))
+            .toList(),
+      ]);
     } else {
       return DataTable(
         columns: [

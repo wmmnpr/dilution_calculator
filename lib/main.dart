@@ -94,21 +94,38 @@ class _BottleHomePageState extends State<BottleHomePage> {
         (k, v) =>
             MapEntry(k, Concentration(v.amount / dilutionFactor, v.unit)));
     Map<String, Dilutant> dilutants = <String, Dilutant>{};
-    Solution solution =
-        Solution(dilutantName, Concentration(0.0, ConcentrationUnit.mgPerML));
-    solutions.putIfAbsent(dilutantName, () => solution);
+
+    double totalSolutes = dilution.dilutants.values.fold(
+        0.0,
+        (sum, v) =>
+            sum +
+            (v.concentration.amount *
+                v.concentration.unit.multiplier *
+                v.volume.amount *
+                v.volume.units.multiplier));
+
+    double totalVolume = dilution.dilutants.values.fold(
+        0.0, (sum, v) => sum + v.volume.amount * v.volume.units.multiplier);
+
+    double concMgPerML = totalSolutes / totalVolume;
+
+    Solution solution = Solution(
+        dilutantName, Concentration(concMgPerML, ConcentrationUnit.mgPerML));
+    //solutions.putIfAbsent(dilutantName, () => solution);
     dilutants.putIfAbsent(
         dilutantName,
         () =>
-            Dilutant(solution, Concentration(0.0, ConcentrationUnit.mgPerML)));
+            Dilutant.n(solution, Concentration(concMgPerML, ConcentrationUnit.mgPerML), Volume(dilution.volume.amount/dilutionFactor, dilution.volume.units)));
     dilutants.putIfAbsent(
         WATER,
-        () => Dilutant(
-            STOCK_WATER, Concentration(0.0, ConcentrationUnit.mgPerML)));
+        () => Dilutant.n(
+            STOCK_WATER, Concentration(0.0, ConcentrationUnit.mgPerML),Volume(dilution.volume.amount - dilution.volume.amount/dilutionFactor, dilution.volume.units)));
     Dilution newDilution = Dilution(
         volume: dilution.volume.copy(),
         concentrations: concentrations,
         dilutants: dilutants);
+
+    newDilution.dilutionType = DilutionType.SERIAL;
     return newDilution;
   }
 
