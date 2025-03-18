@@ -35,25 +35,24 @@ class _BottleHomePageState extends State<BottleHomePage> {
   }
 
   void _calculateDilutions() {
+    _calculateDilutionFrom(dilutions.first);
+  }
+
+  void _calculateDilutionFrom(Dilution dilution) {
     List<double> stockConcentrations = extractStockConcentrations(solutions);
-
     List<List<double>> stockMatrix = createStockMatrix(stockConcentrations);
-
-    List<double> volumeVector = extractDilutionConcentrations(dilutions.first);
-
+    List<double> volumeVector = extractDilutionConcentrations(dilution);
     List<List<double>> matrixBb = [volumeVector];
     List<double>? volumes = solveIt(stockMatrix, matrixBb);
-
-    VolumeUnits targetVolume = dilutions.first.volume.units;
+    VolumeUnits targetVolume = dilution.volume.units;
     if (volumes != null) {
       for (int i = 0; i < volumes.length - 1; i++) {
-        dilutions.first.dilutants.values.elementAt(i).volume.amount =
+        dilution.dilutants.values.elementAt(i).volume.amount =
             volumes[i] / targetVolume.multiplier;
-        dilutions.first.dilutants.values.elementAt(i).volume.units =
-            targetVolume;
+        dilution.dilutants.values.elementAt(i).volume.units = targetVolume;
         //print("Use ${volumes[i].toStringAsFixed(4)} mL of Stock ${i + 1}");
       }
-      dilutions.first.dilutants.putIfAbsent(
+      dilution.dilutants.putIfAbsent(
           WATER,
           () => Dilutant.n(
               STOCK_WATER,
@@ -88,8 +87,8 @@ class _BottleHomePageState extends State<BottleHomePage> {
     setState(() {});
   }
 
-  Dilution _createDilution(final Dilution dilution, final String dilutantName,
-      double dilutionFactor) {
+  Dilution _createStepDilution(final Dilution dilution,
+      final String dilutantName, double dilutionFactor) {
     Map<String, Concentration> concentrations = dilution.concentrations.map(
         (k, v) =>
             MapEntry(k, Concentration(v.amount / dilutionFactor, v.unit)));
@@ -114,12 +113,20 @@ class _BottleHomePageState extends State<BottleHomePage> {
     //solutions.putIfAbsent(dilutantName, () => solution);
     dilutants.putIfAbsent(
         dilutantName,
-        () =>
-            Dilutant.n(solution, Concentration(concMgPerML, ConcentrationUnit.mgPerML), Volume(dilution.volume.amount/dilutionFactor, dilution.volume.units)));
+        () => Dilutant.n(
+            solution,
+            Concentration(concMgPerML, ConcentrationUnit.mgPerML),
+            Volume(dilution.volume.amount / dilutionFactor,
+                dilution.volume.units)));
     dilutants.putIfAbsent(
         WATER,
         () => Dilutant.n(
-            STOCK_WATER, Concentration(0.0, ConcentrationUnit.mgPerML),Volume(dilution.volume.amount - dilution.volume.amount/dilutionFactor, dilution.volume.units)));
+            STOCK_WATER,
+            Concentration(0.0, ConcentrationUnit.mgPerML),
+            Volume(
+                dilution.volume.amount -
+                    dilution.volume.amount / dilutionFactor,
+                dilution.volume.units)));
     Dilution newDilution = Dilution(
         volume: dilution.volume.copy(),
         concentrations: concentrations,
@@ -140,7 +147,21 @@ class _BottleHomePageState extends State<BottleHomePage> {
       if (result! > 1.0) {
         Dilution dilution = dilutions.elementAt(dilutionListIndex);
         String dilutantName = "d_$dilutionListIndex";
-        Dilution dilutionNew = _createDilution(dilution, dilutantName, result);
+        Dilution dilutionNew =
+            _createStepDilution(dilution, dilutantName, result);
+
+        dilutionNew.dilutants.forEach((k, dilutant) {
+          if (dilutant.solution.name != WATER) {
+            Dilution recalc = dilutions.elementAt(int.parse(k.substring(2)));
+            double origVol =
+                recalc.volume.amount * recalc.volume.units.multiplier;
+            double extraVol =
+                dilutant.volume.amount * dilutant.volume.units.multiplier;
+            recalc.volume = Volume((origVol + extraVol)/VolumeUnits.ml.multiplier, VolumeUnits.ml);
+            _calculateDilutionFrom(recalc);
+          }
+        });
+
         dilutions.add(dilutionNew);
       }
     }
