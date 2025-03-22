@@ -93,6 +93,8 @@ class Dilutant {
 enum DilutionType { SIMPLE, SERIAL }
 
 class Dilution {
+  static int instId = 0;
+  int id = instId++;
   DilutionType dilutionType;
   Volume volume;
   Map<String, Concentration> concentrations;
@@ -104,17 +106,49 @@ class Dilution {
       required this.dilutants,
       this.dilutionType = DilutionType.SIMPLE});
 
-  Dilution copy() => Dilution(
-      volume: volume.copy(),
-      concentrations: concentrations.map((k, v) => MapEntry(k, v.copy())),
-      dilutants: dilutants.map((k, v) => MapEntry(k, v.copy())));
+  Dilution.copy(this.id, this.volume, this.concentrations, this.dilutants,
+      this.dilutionType) {}
 
-  Dilution compact(String name, Volume volume) {
-    Dilution dilution = Dilution(
-        volume: volume,
+  String getWorkingName() {
+    return 'd_$id';
+  }
+
+  Dilution copy() {
+    var d = Dilution(
+        volume: volume.copy(),
         concentrations: concentrations.map((k, v) => MapEntry(k, v.copy())),
         dilutants: dilutants.map((k, v) => MapEntry(k, v.copy())));
-    return dilution;
+    d.id = id;
+    return d;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || (other is Dilution && other.id == id);
+
+  @override
+  int get hashCode => id.hashCode;
+}
+
+extension DilutionListExtension on List<Dilution> {
+  static List<Dilution> origDilutions = <Dilution>[];
+
+  void addIf(Dilution dilution) {
+    if (!origDilutions.contains(dilution)) {
+      origDilutions.add(dilution);
+    }
+    add(dilution);
+  }
+
+  Dilution firstIf() {
+    Dilution d = origDilutions.elementAt(origDilutions.indexOf(first));
+    remove(d);
+    add(d);
+    return d;
+  }
+
+  Dilution getOriginal(Dilution dilution) {
+    return origDilutions.firstWhere((test) => test == dilution);
   }
 }
 

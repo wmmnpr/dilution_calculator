@@ -31,7 +31,12 @@ class _BottleHomePageState extends State<BottleHomePage> {
   final List<Dilution> dilutions = [];
 
   _BottleHomePageState() {
-    solutions.putIfAbsent(WATER, () => STOCK_WATER);
+    solutions.putIfAbsent(WATER,
+        () => Solution(WATER, Concentration(0.0, ConcentrationUnit.mgPerML)));
+    solutions.putIfAbsent('a',
+        () => Solution('a', Concentration(10.0, ConcentrationUnit.mgPerML)));
+    solutions.putIfAbsent('b',
+        () => Solution('b', Concentration(5.0, ConcentrationUnit.mgPerML)));
   }
 
   void _calculateDilutions() {
@@ -52,6 +57,7 @@ class _BottleHomePageState extends State<BottleHomePage> {
         dilution.dilutants.values.elementAt(i).volume.units = targetVolume;
         //print("Use ${volumes[i].toStringAsFixed(4)} mL of Stock ${i + 1}");
       }
+      dilution.dilutants.remove(WATER);
       dilution.dilutants.putIfAbsent(
           WATER,
           () => Dilutant.n(
@@ -87,8 +93,7 @@ class _BottleHomePageState extends State<BottleHomePage> {
     setState(() {});
   }
 
-  Dilution _createStepDilution(final Dilution dilution,
-      final String dilutantName, double dilutionFactor) {
+  Dilution _createStepDilution(final Dilution dilution, double dilutionFactor) {
     Map<String, Concentration> concentrations = dilution.concentrations.map(
         (k, v) =>
             MapEntry(k, Concentration(v.amount / dilutionFactor, v.unit)));
@@ -108,11 +113,11 @@ class _BottleHomePageState extends State<BottleHomePage> {
 
     double concMgPerML = totalSolutes / totalVolume;
 
-    Solution solution = Solution(
-        dilutantName, Concentration(concMgPerML, ConcentrationUnit.mgPerML));
+    Solution solution = Solution(dilution.getWorkingName(),
+        Concentration(concMgPerML, ConcentrationUnit.mgPerML));
     //solutions.putIfAbsent(dilutantName, () => solution);
     dilutants.putIfAbsent(
-        dilutantName,
+        dilution.getWorkingName(),
         () => Dilutant.n(
             solution,
             Concentration(concMgPerML, ConcentrationUnit.mgPerML),
@@ -146,23 +151,23 @@ class _BottleHomePageState extends State<BottleHomePage> {
       );
       if (result! > 1.0) {
         Dilution dilution = dilutions.elementAt(dilutionListIndex);
-        String dilutantName = "d_$dilutionListIndex";
-        Dilution dilutionNew =
-            _createStepDilution(dilution, dilutantName, result);
+        Dilution stepDilution = _createStepDilution(dilution, result);
 
-        dilutionNew.dilutants.forEach((k, dilutant) {
+        stepDilution.dilutants.forEach((k, dilutant) {
           if (dilutant.solution.name != WATER) {
             Dilution recalc = dilutions.elementAt(int.parse(k.substring(2)));
             double origVol =
                 recalc.volume.amount * recalc.volume.units.multiplier;
             double extraVol =
                 dilutant.volume.amount * dilutant.volume.units.multiplier;
-            recalc.volume = Volume((origVol + extraVol)/VolumeUnits.ml.multiplier, VolumeUnits.ml);
+            recalc.volume = Volume(
+                (origVol + extraVol) / VolumeUnits.ml.multiplier,
+                VolumeUnits.ml);
             _calculateDilutionFrom(recalc);
           }
         });
 
-        dilutions.add(dilutionNew);
+        dilutions.add(stepDilution);
       }
     }
 
