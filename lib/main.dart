@@ -1,4 +1,5 @@
 import 'package:dilution_calculator/add_dilution_dialog.dart';
+import 'package:dilution_calculator/dilute_by_custom_dialog.dart';
 import 'package:flutter/material.dart';
 
 import 'add_solution_dialog.dart';
@@ -40,25 +41,26 @@ class _BottleHomePageState extends State<BottleHomePage> {
   }
 
   void _calculateDilutions() {
-    _calculateDilutionFrom(dilutions.first);
+    _calculateDilutionFrom(dilutions.first, solutions);
+    setState(() => 1);
   }
 
-  void _calculateDilutionFrom(Dilution dilution) {
+  static void _calculateDilutionFrom(Dilution targetDilution, Map<String, Solution> solutions) {
     List<double> stockConcentrations = extractStockConcentrations(solutions);
     List<List<double>> stockMatrix = createStockMatrix(stockConcentrations);
-    List<double> volumeVector = extractDilutionConcentrations(dilution);
+    List<double> volumeVector = extractDilutionConcentrations(targetDilution);
     List<List<double>> matrixBb = [volumeVector];
     List<double>? volumes = solveIt(stockMatrix, matrixBb);
-    VolumeUnits targetVolume = dilution.volume.units;
+    VolumeUnits targetVolume = targetDilution.volume.units;
     if (volumes != null) {
       for (int i = 0; i < volumes.length - 1; i++) {
-        dilution.dilutants.values.elementAt(i).volume.amount =
+        targetDilution.dilutants.values.elementAt(i).volume.amount =
             volumes[i] / targetVolume.multiplier;
-        dilution.dilutants.values.elementAt(i).volume.units = targetVolume;
+        targetDilution.dilutants.values.elementAt(i).volume.units = targetVolume;
         //print("Use ${volumes[i].toStringAsFixed(4)} mL of Stock ${i + 1}");
       }
-      dilution.dilutants.remove(WATER);
-      dilution.dilutants.putIfAbsent(
+      targetDilution.dilutants.remove(WATER);
+      targetDilution.dilutants.putIfAbsent(
           WATER,
           () => Dilutant.n(
               STOCK_WATER,
@@ -67,7 +69,6 @@ class _BottleHomePageState extends State<BottleHomePage> {
     } else {
       print("No valid solution: check concentrations and target values.");
     }
-    setState(() => 1);
   }
 
   void _showAddSolutionDialog() {
@@ -144,7 +145,7 @@ class _BottleHomePageState extends State<BottleHomePage> {
   void _diluteDilutionBy(String action, int dilutionListIndex) async {
     if (action == 'delete') {
       dilutions.removeAt(dilutionListIndex);
-    } else {
+    } else if(action == 'diluteBy') {
       double? result = await showDialog<double>(
         context: context,
         builder: (context) => DiluteByInputDialog(),
@@ -163,12 +164,15 @@ class _BottleHomePageState extends State<BottleHomePage> {
             recalc.volume = Volume(
                 (origVol + extraVol) / VolumeUnits.ml.multiplier,
                 VolumeUnits.ml);
-            _calculateDilutionFrom(recalc);
+            _calculateDilutionFrom(recalc, solutions);
           }
         });
 
         dilutions.add(stepDilution);
       }
+    } else if(action == "diluteByCustom"){
+      Dilution dilutant = dilutions.elementAt(dilutionListIndex);
+      _showAddDiluteByCustomDialog(dilutant);
     }
 
     setState(() {
@@ -184,6 +188,28 @@ class _BottleHomePageState extends State<BottleHomePage> {
           solutions: solutions,
           dilutions: dilutions,
           onConfirm: () {
+            setState(() {});
+          },
+        );
+      },
+    );
+  }
+
+  void _showAddDiluteByCustomDialog(Dilution dilutant) {
+    List<Dilution>dilutions = <Dilution>[];
+    Map<String, Solution> extendSolutions = <String, Solution>{};
+    showDialog(
+      context: context,
+      builder: (context) {
+        return DiluteByCustomDialog(
+          solutions: solutions,
+          dilutions: dilutions,
+          onConfirm: () {
+            for (var dil in dilutions) {
+              print(dil.toString());
+            }
+            extendSolutions.addAll(solutions);
+            //create solution from dilution
             setState(() {});
           },
         );

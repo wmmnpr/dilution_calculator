@@ -74,6 +74,10 @@ class Solution {
   Solution copy() {
     return Solution(name, concentration.copy());
   }
+
+  Solution fromDilution(Dilution dilution){
+    return Solution(dilution.getWorkingName(), dilution.concentrations.values.first);
+  }
 }
 
 class Dilutant {

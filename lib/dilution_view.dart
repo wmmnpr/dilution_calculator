@@ -113,6 +113,8 @@ class SimpleDilutionDataTable extends StatelessWidget {
                           const PopupMenuItem(
                               value: 'diluteBy', child: Text('Dilute by ...')),
                           const PopupMenuItem(
+                              value: 'diluteByCustom', child: Text('Dilute by custom ...')),
+                          const PopupMenuItem(
                               value: 'delete', child: Text('Delete')),
                         ],
                         child: const Icon(Icons.more_vert), // Three-dot menu
