@@ -41,34 +41,8 @@ class _BottleHomePageState extends State<BottleHomePage> {
   }
 
   void _calculateDilutions() {
-    _calculateDilutionFrom(dilutions.first, solutions);
+    calculateDilutionFrom(dilutions.first, solutions);
     setState(() => 1);
-  }
-
-  static void _calculateDilutionFrom(Dilution targetDilution, Map<String, Solution> solutions) {
-    List<double> stockConcentrations = extractStockConcentrations(solutions);
-    List<List<double>> stockMatrix = createStockMatrix(stockConcentrations);
-    List<double> volumeVector = extractDilutionConcentrations(targetDilution);
-    List<List<double>> matrixBb = [volumeVector];
-    List<double>? volumes = solveIt(stockMatrix, matrixBb);
-    VolumeUnits targetVolume = targetDilution.volume.units;
-    if (volumes != null) {
-      for (int i = 0; i < volumes.length - 1; i++) {
-        targetDilution.dilutants.values.elementAt(i).volume.amount =
-            volumes[i] / targetVolume.multiplier;
-        targetDilution.dilutants.values.elementAt(i).volume.units = targetVolume;
-        //print("Use ${volumes[i].toStringAsFixed(4)} mL of Stock ${i + 1}");
-      }
-      targetDilution.dilutants.remove(WATER);
-      targetDilution.dilutants.putIfAbsent(
-          WATER,
-          () => Dilutant.n(
-              STOCK_WATER,
-              Concentration(0.0, ConcentrationUnit.mgPerML),
-              Volume(volumes.last / targetVolume.multiplier, targetVolume)));
-    } else {
-      print("No valid solution: check concentrations and target values.");
-    }
   }
 
   void _showAddSolutionDialog() {
@@ -145,7 +119,7 @@ class _BottleHomePageState extends State<BottleHomePage> {
   void _diluteDilutionBy(String action, int dilutionListIndex) async {
     if (action == 'delete') {
       dilutions.removeAt(dilutionListIndex);
-    } else if(action == 'diluteBy') {
+    } else if (action == 'diluteBy') {
       double? result = await showDialog<double>(
         context: context,
         builder: (context) => DiluteByInputDialog(),
@@ -164,13 +138,13 @@ class _BottleHomePageState extends State<BottleHomePage> {
             recalc.volume = Volume(
                 (origVol + extraVol) / VolumeUnits.ml.multiplier,
                 VolumeUnits.ml);
-            _calculateDilutionFrom(recalc, solutions);
+            calculateDilutionFrom(recalc, solutions);
           }
         });
 
         dilutions.add(stepDilution);
       }
-    } else if(action == "diluteByCustom"){
+    } else if (action == "diluteByCustom") {
       Dilution dilutant = dilutions.elementAt(dilutionListIndex);
       _showAddDiluteByCustomDialog(dilutant);
     }
@@ -196,7 +170,7 @@ class _BottleHomePageState extends State<BottleHomePage> {
   }
 
   void _showAddDiluteByCustomDialog(Dilution dilutant) {
-    List<Dilution>dilutions = <Dilution>[];
+    List<Dilution> dilutions = <Dilution>[];
     Map<String, Solution> extendSolutions = <String, Solution>{};
     showDialog(
       context: context,

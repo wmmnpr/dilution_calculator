@@ -75,8 +75,9 @@ class Solution {
     return Solution(name, concentration.copy());
   }
 
-  Solution fromDilution(Dilution dilution){
-    return Solution(dilution.getWorkingName(), dilution.concentrations.values.first);
+  Solution fromDilution(Dilution dilution) {
+    return Solution(
+        dilution.getWorkingName(), dilution.concentrations.values.first);
   }
 }
 
@@ -242,4 +243,31 @@ List<double> solveIt(List<List<double>> matrixAa, List<List<double>> matrixBb) {
   final solver = LUSolver(matrix: matrixA, knownValues: matrixB.flattenData);
   final List<double> solution = solver.solve();
   return solution;
+}
+
+void calculateDilutionFrom(
+    Dilution targetDilution, Map<String, Solution> solutions) {
+  List<double> stockConcentrations = extractStockConcentrations(solutions);
+  List<List<double>> stockMatrix = createStockMatrix(stockConcentrations);
+  List<double> volumeVector = extractDilutionConcentrations(targetDilution);
+  List<List<double>> matrixBb = [volumeVector];
+  List<double>? volumes = solveIt(stockMatrix, matrixBb);
+  VolumeUnits targetVolume = targetDilution.volume.units;
+  if (volumes != null) {
+    for (int i = 0; i < volumes.length - 1; i++) {
+      targetDilution.dilutants.values.elementAt(i).volume.amount =
+          volumes[i] / targetVolume.multiplier;
+      targetDilution.dilutants.values.elementAt(i).volume.units = targetVolume;
+//print("Use ${volumes[i].toStringAsFixed(4)} mL of Stock ${i + 1}");
+    }
+    targetDilution.dilutants.remove(WATER);
+    targetDilution.dilutants.putIfAbsent(
+        WATER,
+        () => Dilutant.n(
+            STOCK_WATER,
+            Concentration(0.0, ConcentrationUnit.mgPerML),
+            Volume(volumes.last / targetVolume.multiplier, targetVolume)));
+  } else {
+    print("No valid solution: check concentrations and target values.");
+  }
 }
